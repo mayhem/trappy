@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from time import sleep
+from time import sleep, monotonic
 import serial
 from struct import pack, unpack
 from random import randint
@@ -33,7 +33,7 @@ class TrappyDriver:
             frame = frame[chunk_size:]
             self.ser.write(data)
 
-        self.ser.read(1)
+        ch = self.ser.read(1)
 
     def write_show(self):
         self.ser.write(b"AB2")
@@ -48,10 +48,10 @@ class TrappyDriver:
             for i in range(144):
                 for s in range(8):
                     rgb = bytearray((randint(0, 255), randint(0, 255), randint(0, 255)))
-                    frame = bytearray(rgb * 144 * 8)
+                    frame = bytearray(rgb * 8 * 1)
                     td.write_frame(frame)
 
-td = TrappyDriver("/dev/ttyACM0", 921600)
+td = TrappyDriver("/dev/ttyACM0", 460800) #921600)
 td.open()
 try:
     td.test()
