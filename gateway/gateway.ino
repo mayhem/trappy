@@ -2,9 +2,9 @@
 #include <Adafruit_NeoPXL8.h>
 #include <SerialUSB.h>
 
-const uint8_t num_leds = 144;
-const uint8_t num_strips = 8;
-const uint8_t buffer_size = num_leds * num_strips * 3;
+const uint16_t num_leds = 144;
+const uint16_t num_strips = 8;
+const uint16_t buffer_size = num_leds * num_strips * 3;
 
 // For the Feather RP2040 SCORPIO, use this list:
 int8_t pins[8] = { 16, 17, 18, 19, 20, 21, 22, 23 };
@@ -44,7 +44,7 @@ void setup() {
 }
 
 void handle_frame(uint8_t *data) {
-    for(int i = 0; i < num_leds * num_strips; i++)
+    for(int16_t i = 0; i < num_leds * num_strips; i++)
         leds.setPixelColor(i, leds.Color(data[i * 3], data[i*3+1], data[i*3+2]));
     leds.show();
 }
@@ -58,7 +58,7 @@ void handle_clear() {
     leds.show();  
 }
 
-void test() {
+void _loop() {
     static int i = 0;
     static uint8_t *buffer = (uint8_t*)malloc(buffer_size);
   
@@ -67,8 +67,12 @@ void test() {
         buffer[j * 3 + 1] = 0;
         buffer[j * 3 + 2] = 80;
     }
+
+    for(int j = 0; j < num_leds * num_strips * 3; j++)
+        buffer[j] = 32;
   
     handle_frame(buffer);
+    delay(100);
     i++;
     if (i > 255)
         i = 0;
@@ -113,7 +117,7 @@ void loop()
             continue;
         }
         if (ch == '1') {
-            uint8_t data[num_leds * num_strips * 3];
+            uint8_t data[buffer_size];
             uint16_t offset = 0;
 
             for(;;) {

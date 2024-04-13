@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from time import sleep, monotonic
+from time import sleep
 import serial
 from struct import pack, unpack
 from random import randint
@@ -44,14 +44,16 @@ class TrappyDriver:
         self.ser.read(1)
 
     def test(self):
+        buffer_size = 144 * 8 * 3
         while True:
             for i in range(144):
+                frame = bytearray(buffer_size);
                 for s in range(8):
-                    rgb = bytearray((randint(0, 255), randint(0, 255), randint(0, 255)))
-                    frame = bytearray(rgb * 8 * 1)
-                    td.write_frame(frame)
+                    frame[s * 144 * 3 + (i * 3)] = 255
+                td.write_frame(frame)
 
-td = TrappyDriver("/dev/ttyACM0", 460800) #921600)
+#td = TrappyDriver("/dev/ttyACM0", 460800)
+td = TrappyDriver("/dev/ttyACM0", 921600)
 td.open()
 try:
     td.test()
