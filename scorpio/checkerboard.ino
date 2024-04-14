@@ -65,18 +65,20 @@ void set_pixel(uint8_t *buffer, uint8_t strip, uint8_t index, uint8_t red, uint8
     buffer[offset + 2] = blue;
 }
 
-void _loop() {
-    static uint16_t i = 0;
+void loop() {
+    static uint8_t i = 0;
     static uint8_t buffer[buffer_size];
   
     memset(buffer, 0, buffer_size);
     for(int j = 0; j < num_strips; j++) {
         for(int k = 0; k < num_leds; k++) {
-          if (k == i)
-              set_pixel(buffer, j, k, 255, 0, 0);             
+          if (k / 4 % 2 == (i % 2))
+              set_pixel(buffer, j, k, 255, 0, 0);
+          else
+              set_pixel(buffer, j, k, 0, 0, 255);              
         }
     }
-    i = (i+1) % num_leds;
+    i++;
     
     handle_frame(buffer); 
 }
@@ -94,7 +96,7 @@ void toggle_led(void) {
     }
 }
 
-void loop()
+void _loop()
 {
     uint8_t header = 0, ch;
     for(;;)
