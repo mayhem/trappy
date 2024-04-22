@@ -1,10 +1,11 @@
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_NeoPXL8.h>
+#include <SerialUART.h>
 #include <SerialUSB.h>
 
 const uint8_t num_leds = 144;
 const uint8_t num_strips = 8;
-const uint8_t buffer_size = num_leds * num_strips * 3;
+const uint16_t buffer_size = num_leds * num_strips * 3;
 
 // For the Feather RP2040 SCORPIO, use this list:
 int8_t pins[8] = { 16, 17, 18, 19, 20, 21, 22, 23 };
@@ -18,7 +19,8 @@ void set_color(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void setup() {
-    uart.begin();
+    Serial1.begin(921600);
+    uart.begin(9600);
     pixel.begin();
     set_color(0, 0, 0);
     if (!leds.begin()) {
@@ -41,6 +43,8 @@ void setup() {
     }
     leds.fill(0x0);
     leds.show();
+
+
 }
 
 void handle_frame(uint8_t *data) {
@@ -96,9 +100,10 @@ void loop()
     {
         header = 0;
         for(;;) {
-            ch = uart.read();
+            ch = Serial1.read();
             if (ch == 'A')
             {
+                set_color(255, 0, 0);
                 header++;
                 continue;
             }
@@ -107,17 +112,21 @@ void loop()
 
             header = 0;
         }
-        ch = uart.read();
+        set_color(0, 0, 255);
+        ch = Serial1.read();
         if (ch != '1' && ch != '2' && ch != '3') {
-            uart.write('0');
+            Serial1.write('0');
+            uart.write('2');
             continue;
         }
         if (ch == '1') {
             uint8_t data[num_leds * num_strips * 3];
             uint16_t offset = 0;
 
+            set_color(255, 255, 255);
+
             for(;;) {
-                uint16_t read = uart.readBytes(data + offset, 1);
+                uint16_t read = Serial1.readBytes(data + offset, 1);
                 if (read > 0) {
                     offset += read;
                     if (offset == buffer_size)
@@ -131,19 +140,23 @@ void loop()
             }
 
             handle_frame(data);
+            Serial1.write('1');
             uart.write('1');
             continue;
         }
         if (ch == '2') {
             handle_show();
+            Serial1.write('1');
             uart.write('1');
             continue;
         }
         if (ch == '3') {
             handle_clear();
+            Serial1.write('1');
             uart.write('1');
             continue;
         }
+        Serial1.write('0');
         uart.write('0');
     }
 }
