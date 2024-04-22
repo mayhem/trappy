@@ -1,6 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_NeoPXL8.h>
 #include <SerialUSB.h>
+#include <math.h>
 #include "gradient.h"
 
 const uint16_t num_leds = 144;
@@ -21,6 +22,7 @@ void set_color(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void setup() {
+    randomSeed(68);
     uart.begin();
     pixel.begin();
     set_color(0, 0, 0);
@@ -33,7 +35,7 @@ void setup() {
             delay(100);
         }
     }
-    leds.setBrightness(32);
+    leds.setBrightness(10);
     for(int i = 0; i < 5; i++) {
         leds.fill(0xFF9000);
         leds.show();
@@ -65,22 +67,30 @@ void checkerboard() {
     static uint8_t buffer[buffer_size];
     color_t        color;
   
-    memset(buffer, 0, buffer_size);
-    for(int j = 0; j < num_strips; j++) {
-        for(int k = 0; k < num_leds; k++) {
-          if (k / 4 % 2 == (i % 2))
-              color = { 255, 0, 0 };
-          else
-              color = { 0, 255, 0 };
-          set_pixel(buffer, j, k, &color);
-        }
+    int stop = millis() + 10000;
+    while(millis() < stop) {
+      memset(buffer, 0, buffer_size);
+      for(int j = 0; j < num_strips; j++) {
+          for(int k = 0; k < num_leds; k++) {
+            if (k / 4 % 2 == (i % 2))
+                color = { 255, 0, 0 };
+            else
+                color = { 0, 255, 0 };
+            set_pixel(buffer, j, k, &color);
+          }
+      }
+      i++;
+      show_buffer(buffer); 
     }
-    i++;
-    
-    show_buffer(buffer); 
 }
 
-//
+void random_color(color_t *col)
+{
+    col->red = (int)(rand() * 128) + 127;
+    col->green = (int)(rand() * 128) + 127;
+    col->blue = (int)(rand() * 128) + 127;
+}
+
 void gradient_test()
 {
     gradient_t grad;
@@ -90,24 +100,54 @@ void gradient_test()
     grad.points = 3;
     grad.leds = 144;
     grad.palette[0].index = 0.0;
-    grad.palette[0].color = {255, 0, 0};
+    //grad.palette[0].color = {255, 0, 0};
     grad.palette[1].index = .5;
-    grad.palette[1].color = {0, 255, 0};
+    //grad.palette[1].color = {255, 255, 0};
     grad.palette[2].index = 1.0;
-    grad.palette[2].color = {0, 0, 255};
+    //grad.palette[2].color = {0, 255, 0};
 
-    for(int j = 0; j < num_leds; j++) {
-        gradient_color(&grad, j, &color);   
-        //delay(50);   
-        for(int k = 0; k < num_strips; k++) {
+    random_color(&grad.palette[0].color);
+    random_color(&grad.palette[1].color);
+    random_color(&grad.palette[2].color);
 
-            set_pixel(buffer, k, j, &color);
+    for(float t = 0.0; t < 100; t+=.1) {
+        float wiggle = (sin(t) / 6.0) + .5 + (sin(t*4) / 12);
+        grad.palette[1].index = wiggle;
+        for(int j = 0; j < num_leds; j++) {
+            //gradient_color(&grad, j, &color);   
+            for(int k = 0; k < num_strips; k++) {
+                gradient_color(&grad, j, &color);
+                set_pixel(buffer, k, j, &color);
+            }
         }
+        show_buffer(buffer); 
     }
-    show_buffer(buffer); 
+   
+}
+
+void chase()
+{
+    color_t    color;
+    static uint8_t buffer[buffer_size];
+
+    for(int i = 0; i < 10; i++) {
+        random_color(&color);
+        int clear = i % 3 == 0;
+        for(int j = 0; j < num_leds; j++) {
+            for(int k = 0; k < num_strips; k++) {
+                set_pixel(buffer, k, j, &color);
+            }
+            show_buffer(buffer);
+
+            if (clear)
+                memset(buffer, 0, buffer_size);
+        }    
+    }
 }
 
 void loop()
 {
+    chase();
     gradient_test();
+    checkerboard();
 }

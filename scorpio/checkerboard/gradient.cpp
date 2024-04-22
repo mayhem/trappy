@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <SerialUSB.h>
 #include "gradient.h"
 
 #define min(a,b)  (((a) < (b)) ? (a) : (b))
-
-extern SerialUSB uart;
 
 void gradient_color(gradient_t *grad, uint16_t led, color_t *dest) 
 {
@@ -20,14 +16,6 @@ void gradient_color(gradient_t *grad, uint16_t led, color_t *dest)
             float   section_begin_offset = grad->palette[index - 1].index;
             float   section_end_offset = grad->palette[index].index;
             int16_t red, green, blue;
-
-            uart.print(led);
-            uart.print(" ");
-            uart.print(offset);
-            uart.print(" ");
-            uart.print(section_begin_offset);
-            uart.print(" ");
-            uart.println(section_end_offset);
 
             float percent = (offset - section_begin_offset) / (section_end_offset - section_begin_offset);
             red = (int)(grad->palette[index - 1].color.red +
