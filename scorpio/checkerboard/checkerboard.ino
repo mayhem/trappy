@@ -33,7 +33,7 @@ void setup() {
             delay(100);
         }
     }
-    leds.setBrightness(64);
+    leds.setBrightness(32);
     for(int i = 0; i < 5; i++) {
         leds.fill(0xFF9000);
         leds.show();
@@ -44,7 +44,6 @@ void setup() {
     }
     leds.fill(0x0);
     leds.show();
-
 }
 
 void show_buffer(uint8_t *data) {
@@ -72,7 +71,7 @@ void checkerboard() {
           if (k / 4 % 2 == (i % 2))
               color = { 255, 0, 0 };
           else
-              color = { 255, 0, 255 };
+              color = { 0, 255, 0 };
           set_pixel(buffer, j, k, &color);
         }
     }
@@ -81,27 +80,28 @@ void checkerboard() {
     show_buffer(buffer); 
 }
 
-void gradient_color(gradient_t *grad, uint16_t led, color_t *dest);
+//
 void gradient_test()
 {
     gradient_t grad;
     color_t    color;
     static uint8_t buffer[buffer_size];
 
-    grad.points = 2;
+    grad.points = 3;
     grad.leds = 144;
     grad.palette[0].index = 0.0;
     grad.palette[0].color = {255, 0, 0};
     grad.palette[1].index = .5;
-    grad.palette[1].color = {255, 80, 0};
-    //grad.palette[2].index = 1.0;
-    //grad.palette[2].color = {255, 0, 255};
+    grad.palette[1].color = {0, 255, 0};
+    grad.palette[2].index = 1.0;
+    grad.palette[2].color = {0, 0, 255};
 
-    for(int j = 0; j < num_strips; j++) {
-        for(int k = 0; k < num_leds; k++) {
-            delay(250);
-            gradient_color(&grad, k, &color);
-            set_pixel(buffer, j, k, &color);
+    for(int j = 0; j < num_leds; j++) {
+        gradient_color(&grad, j, &color);   
+        //delay(50);   
+        for(int k = 0; k < num_strips; k++) {
+
+            set_pixel(buffer, k, j, &color);
         }
     }
     show_buffer(buffer); 
@@ -109,5 +109,5 @@ void gradient_test()
 
 void loop()
 {
-    checkerboard();
+    gradient_test();
 }

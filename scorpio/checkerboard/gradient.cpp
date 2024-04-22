@@ -14,14 +14,20 @@ void gradient_color(gradient_t *grad, uint16_t led, color_t *dest)
         return;
 
     offset = led / (float)grad->leds;
-    uart.print(offset);
-    uart.print(" ");
-    uart.println(led);
+
     for(int index = 1; index < grad->points; index++) {
         if (grad->palette[index].index >= offset) {
             float   section_begin_offset = grad->palette[index - 1].index;
             float   section_end_offset = grad->palette[index].index;
             int16_t red, green, blue;
+
+            uart.print(led);
+            uart.print(" ");
+            uart.print(offset);
+            uart.print(" ");
+            uart.print(section_begin_offset);
+            uart.print(" ");
+            uart.println(section_end_offset);
 
             float percent = (offset - section_begin_offset) / (section_end_offset - section_begin_offset);
             red = (int)(grad->palette[index - 1].color.red +
@@ -34,6 +40,7 @@ void gradient_color(gradient_t *grad, uint16_t led, color_t *dest)
             dest->red = min(red, 255);
             dest->green = min(green, 255);
             dest->blue = min(blue, 255);
+            return;
         }
     }
 }

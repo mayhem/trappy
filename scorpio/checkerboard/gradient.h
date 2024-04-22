@@ -15,3 +15,4 @@ typedef struct {
     uint8_t   leds;
 } gradient_t;
 
+void gradient_color(gradient_t *grad, uint16_t led, color_t *dest);
