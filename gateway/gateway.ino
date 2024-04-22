@@ -3,8 +3,8 @@
 #include <SerialUART.h>
 #include <SerialUSB.h>
 
-const uint8_t num_leds = 144;
-const uint8_t num_strips = 8;
+const uint16_t num_leds = 144;
+const uint16_t num_strips = 8;
 const uint16_t buffer_size = num_leds * num_strips * 3;
 
 // For the Feather RP2040 SCORPIO, use this list:
@@ -48,7 +48,7 @@ void setup() {
 }
 
 void handle_frame(uint8_t *data) {
-    for(int i = 0; i < num_leds * num_strips; i++)
+    for(int16_t i = 0; i < num_leds * num_strips; i++)
         leds.setPixelColor(i, leds.Color(data[i * 3], data[i*3+1], data[i*3+2]));
     leds.show();
 }
@@ -62,22 +62,27 @@ void handle_clear() {
     leds.show();  
 }
 
-void test() {
-    static int i = 0;
-    static uint8_t *buffer = (uint8_t*)malloc(buffer_size);
+void set_pixel(uint8_t *buffer, uint8_t strip, uint8_t index, uint8_t red, uint8_t green, uint8_t blue) {
+    uint16_t offset = (strip * num_leds + index) * 3;
+    buffer[offset] = red;
+    buffer[offset + 1] = green;
+    buffer[offset + 2] = blue;
+}
+
+void _loop() {
+    static uint16_t i = 0;
+    static uint8_t buffer[buffer_size];
   
-    for(int j = 0; j < num_leds * num_strips; j++) {
-        buffer[j * 3] = i % 255;
-        buffer[j * 3 + 1] = 0;
-        buffer[j * 3 + 2] = 80;
+    memset(buffer, 0, buffer_size);
+    for(int j = 0; j < num_strips; j++) {
+        for(int k = 0; k < num_leds; k++) {
+          if (k == i)
+              set_pixel(buffer, j, k, 255, 0, 0);             
+        }
     }
-  
-    handle_frame(buffer);
-    i++;
-    if (i > 255)
-        i = 0;
-    leds.fill(0);
-    leds.show();  
+    i = (i+1) % num_leds;
+    
+    handle_frame(buffer); 
 }
 
 void toggle_led(void) {
@@ -120,7 +125,7 @@ void loop()
             continue;
         }
         if (ch == '1') {
-            uint8_t data[num_leds * num_strips * 3];
+            uint8_t data[buffer_size];
             uint16_t offset = 0;
 
             set_color(255, 255, 255);

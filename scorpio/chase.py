@@ -1,6 +1,6 @@
 import board
 import neopixel
-from adafruit_neopxl8 import NeoPxl8
+from adafruit_neopxl8 import
 import time
 from random import randint
 from gradient import Gradient
@@ -27,6 +27,12 @@ class Trappy:
             auto_write=False,
             brightness=.25
         )
+        for i in range(5):
+            self.pixels.fill((255, 80, 0))
+            self.pixels.show()
+            self.pixels.fill((255, 0, 255))
+            self.pixels.show()
+
         self.pixels.fill((0, 0, 0))
         self.pixels.show()
 
@@ -60,12 +66,11 @@ class Trappy:
              (1.0, (127, 0, 128))]
         gr = Gradient(g, leds=self.leds)
         for s in range(self.strips):
-
             for l in range(self.leds):
-                self.pixels[(s * self.leds) + l] = (255, 0, 0) #gr.get_color(l)
-                #self.set_led(s, l, gr.get_color(l))
-            self.pixels.show()
+                #self.pixels[(s * self.leds) + l] = (255, 0, 0) #gr.get_color(l)
+                self.set_led(s, l, (255, 0, 0)) #gr.get_color(l))
+        self.pixels.show()
 
 
 t = Trappy()
-t.chase()
+t.gradient()

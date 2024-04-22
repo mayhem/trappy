@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
 import sys
-from time import sleep, monotonic
+from time import sleep
 import serial
 from struct import pack, unpack
 from random import randint
 
 class TrappyDriver:
+
+    num_leds = 144
+    num_strips = 8
+    buffer_size = num_leds * num_strips * 3
 
     def __init__(self, device, baud_rate):
         self.device = device
@@ -17,7 +21,7 @@ class TrappyDriver:
 
         try:
             self.ser = serial.Serial(self.device,
-                                     self.baud_rate,
+                                     300 , #self.baud_rate,
                                      bytesize=serial.EIGHTBITS,
                                      parity=serial.PARITY_NONE,
                                      stopbits=serial.STOPBITS_ONE)
@@ -43,15 +47,25 @@ class TrappyDriver:
         self.ser.write(b"AB3")
         self.ser.read(1)
 
-    def test(self):
-        while True:
-            for i in range(144):
-                for s in range(8):
-                    rgb = bytearray((randint(0, 255), randint(0, 255), randint(0, 255)))
-                    frame = bytearray(rgb * 8 * 1)
-                    td.write_frame(frame)
+    def set_pixel(self, buffer, strip, index, red, green, blue):
+        offset = (strip * self.num_leds + index) * 3
+        buffer[offset] = red
+        buffer[offset + 1] = green
+        buffer[offset + 2] = blue
 
-td = TrappyDriver("/dev/ttyACM0", 460800) #921600)
+    def test(self):
+        i = 0
+        while True:
+            buffer = bytearray(self.buffer_size)
+            for j in range(self.num_strips):
+                for k in range(self.num_leds):
+                    if (k == i):
+                        self.set_pixel(buffer, j, k, 255, 0, 255)
+            i = (i+1) % self.num_leds
+            td.write_frame(bytes(buffer))
+
+#td = TrappyDriver("/dev/ttyACM0", 460800)
+td = TrappyDriver("/dev/ttyACM0", 300)
 td.open()
 try:
     td.test()
