@@ -2,13 +2,9 @@
 #include <Adafruit_NeoPXL8.h>
 #include <SerialUSB.h>
 #include <math.h>
+#include "defs.h"
 #include "gradient.h"
 
-const uint16_t num_leds = 144;
-const uint16_t num_strips = 8;
-const uint16_t total_leds = num_leds * num_strips;
-const uint16_t total_leds_bytes = total_leds * 3;
-const uint16_t bytes_per_row = num_strips * 3;
 
 // For the Feather RP2040 SCORPIO, use this list:
 int8_t pins[8] = { 16, 17, 18, 19, 20, 21, 22, 23 };
@@ -41,8 +37,6 @@ void setup() {
     randomSeed(68);
 
     pixel.begin();   
-   
-
     if (!leds.begin()) {
         for(;;)
         {
@@ -66,14 +60,6 @@ void setup() {
     }
     set_rgb(0, 0, 0); 
 
-    //for(int i = 0; i < 5; i++) {
-    //    leds.fill(0xA08000);
-    //    leds.show();
-    //    delay(100);
-    //    leds.fill(0xA000A0);
-    //    leds.show();
-    //    delay(100);
-    //}
     leds.fill(0x0);
     leds.show();
 
@@ -131,23 +117,22 @@ void gradient_test()
     grad.points = 3;
     grad.leds = 144;
     grad.palette[0].index = 0.0;
-    //grad.palette[0].color = {255, 0, 0};
+    grad.palette[0].color = {255, 0, 0};
     grad.palette[1].index = .5;
-    //grad.palette[1].color = {255, 255, 0};
+    grad.palette[1].color = {255, 0, 255};
     grad.palette[2].index = 1.0;
-    //grad.palette[2].color = {0, 255, 0};
+    grad.palette[2].color = {255, 120, 0};
 
-    random_color(&grad.palette[0].color);
-    random_color(&grad.palette[1].color);
-    random_color(&grad.palette[2].color);
+    //random_color(&grad.palette[0].color);
+    //random_color(&grad.palette[1].color);
+    //random_color(&grad.palette[2].color);
 
     for(float t = 0.0; t < 100; t+=.1) {
-        float wiggle = (sin(t) / 6.0) + .5 + (sin(t*4) / 12);
+        float wiggle = (sin(t/8) / 8.0) + .5 + (sin(t*3) / 12);
         grad.palette[1].index = wiggle;
-        for(int j = 0; j < num_leds; j++) {
-            //gradient_color(&grad, j, &color);   
+        for(int j = 0; j < num_leds; j++) { 
             for(int k = 0; k < num_strips; k++) {
-                gradient_color(&grad, j, &color);
+                gradient_color(&grad, (float)j / num_leds, &color);
                 set_pixel(buffer, k, j, &color);
             }
         }
@@ -239,57 +224,30 @@ void chase()
     }
 }
 
-void effect_chase()
-{
-    color_t buffer[total_leds];
-    memset(buffer, 32, total_leds_bytes);
-
-    uart.println("in effect chase");
-    int stop = millis() + 10000;
-    // millis() < stop
-    for(int i = 0; ;) 
-    {
-        i = effect(buffer, i, num_leds, &pattern_every_other);
-//        effect(buffer, &pattern_every_other, -num_leds);
-    }
-}
-
-uint effect(color_t buffer[total_leds], uint row_index, int num_rows, void (*pattern_func)(uint, color_t[num_strips]))
-{
-    int     direction = (num_rows > 0) ? 1 : 0;
-    color_t row[num_strips];
-   
-    for(int j = 0; j < abs(num_rows); j++, row_index++) 
-    {
-        (*pattern_func)(row_index, row);
-        shift(buffer, row, direction);
-        show_buffer(buffer);
-    }
-    return row_index;
-}
-
-void pattern_every_other(uint row, color_t data[num_strips])
+void pattern_every_other(effect_t *eff, unsigned int row, color_t data[num_strips])
 {
     if (row % 2 == 0)
-        row_random(row, data);
+        (*eff->row_fptr)(eff, row, data);
     else
         memset(data, 0, bytes_per_row);
 }
 
-void pattern_all(uint row, color_t data[num_strips])
+void pattern_all(effect_t *eff, unsigned int row, color_t data[num_strips])
 {
-    row_rainbow(row, data);
+    (*eff->row_fptr)(eff, row, data);
 }
 
-void row_rainbow(uint index, color_t col[num_strips])
+void row_rainbow(effect_t *eff, unsigned int index, color_t col[num_strips])
 {
     memcpy(col, rainbow, bytes_per_row);
 }
 
-void row_random(uint index, color_t col[num_strips])
+void row_random(effect_t *eff, unsigned int index, color_t col[num_strips])
 {
     color_t color;
+    static unsigned int r = 0;
 
+    //gradient_color(&eff->palette, rand(), &color);
     random_color(&color);
     for(int i = 0; i < num_strips; i++)
     {
@@ -297,26 +255,72 @@ void row_random(uint index, color_t col[num_strips])
         col[i].green = color.green;
         col[i].blue = color.blue;        
     }
+    r++;
 }
 
-void row_binary(uint index, color_t col[num_strips])
+void row_binary(effect_t *eff, unsigned int index, color_t col[num_strips])
 {
     color_t color;
 
-    random_color(&color);
-    for(int i; i < num_strips; i++)
+    color.red = 255;
+    color.green = 80;
+    color.blue = 0;
+
+    for(int i = 0; i < num_strips; i++)
     {
-        if (index & (1 << i) != 0) {
-          col[i].red = 255; //color.red;
-          col[i].green = 0; //color.green;
-          col[i].blue = 0; //color.blue;        
+        if (i == index % 8) { //index & (1 << i) != 0) {
+            col[i].red = color.red;
+            col[i].green = color.green;
+            col[i].blue = color.blue;        
+        }
+        else
+        {
+            col[i].red = 0;
+            col[i].green = 0;
+            col[i].blue = 0;  
         }
     }
+}
+
+void effect_chase()
+{
+    color_t buffer[total_leds];
+    memset(buffer, 32, total_leds_bytes);
+    effect_t eff;
+
+    eff.pattern_fptr = &pattern_every_other;
+    eff.row_fptr = &row_random;
+    eff.palette.points = 2;
+    eff.palette.palette[0].index = 0.0;
+    eff.palette.palette[0].color = {255, 0, 0};
+    eff.palette.palette[1].index = 1.0;
+    eff.palette.palette[1].color = {255, 0, 255};
+  
+    int stop = millis() + 10000;
+    for(int i = 0;millis() < stop ;) 
+    {
+        i = effect(&eff, buffer, i, num_leds);
+        //i = effect(&eff, buffer, i, -num_leds);
+    }
+}
+
+unsigned int effect(effect_t *eff, color_t buffer[total_leds], unsigned int row_index, int num_rows)
+{
+    int     direction = (num_rows > 0) ? 1 : 0;
+    color_t row[num_strips];
+   
+    for(int j = 0; j < abs(num_rows); j++, row_index++) 
+    {
+        (*eff->pattern_fptr)(eff, row_index, row);
+        shift(buffer, row, direction);
+        show_buffer(buffer);
+    }
+    return row_index;
 }
 
 void loop()
 {
     effect_chase();
-    //gradient_test();
-    //checkerboard();
+    gradient_test();
+    checkerboard();
 }

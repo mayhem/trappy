@@ -1,16 +1,10 @@
 #include "gradient.h"
 
-#define min(a,b)  (((a) < (b)) ? (a) : (b))
-
-void gradient_color(gradient_t *grad, uint16_t led, color_t *dest) 
+void gradient_color(gradient_t *grad, float offset, color_t *dest) 
 {
-    float offset;
-
-    if (led > grad->leds)
+    if (offset > 1.0 || offset < 0.0)
         return;
-
-    offset = led / (float)grad->leds;
-
+        
     for(int index = 1; index < grad->points; index++) {
         if (grad->palette[index].index >= offset) {
             float   section_begin_offset = grad->palette[index - 1].index;
