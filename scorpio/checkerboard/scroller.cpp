@@ -1,8 +1,13 @@
 #include <math.h>
 #include <string.h>
+
+#include <SerialUSB.h>
 #include "scroller.h"
 #include "core.h"
 #include "color.h"
+#include "gradient.h"
+
+extern SerialUSB uart;
 
 color_t rainbow[8] = {
     {255, 0, 0},
@@ -31,6 +36,18 @@ void pattern_all(effect_t *eff, unsigned int row, color_t data[num_strips])
 void row_rainbow(effect_t *eff, unsigned int index, color_t col[num_strips])
 {
     memcpy(col, rainbow, bytes_per_row);
+}
+
+void row_matrix(effect_t *eff, unsigned int index, color_t col[num_strips])
+{
+    color_t color;
+    int i = rand() % num_strips;
+
+    memset(col, 0, bytes_per_row);
+    gradient_color(&eff->palette, randf(), &color);
+    col[i].red = color.red;
+    col[i].green = color.green;
+    col[i].blue = color.blue;
 }
 
 void row_random(effect_t *eff, unsigned int index, color_t col[num_strips])

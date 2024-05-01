@@ -46,7 +46,6 @@ void setup() {
     leds.show();
 
     uart.begin();
-    uart.println("trappy!");
 }
 
 void checkerboard() {
@@ -110,8 +109,8 @@ void effect_chase()
     memset(buffer, 32, total_leds_bytes);
     effect_t eff;
 
-    eff.pattern_fptr = &pattern_all;
-    eff.row_fptr = &row_binary;
+    eff.pattern_fptr = &pattern_every_other;
+    eff.row_fptr = &row_matrix;
     eff.palette.points = 2;
     eff.palette.palette[0].index = 0.0;
     eff.palette.palette[0].color = {255, 0, 0};
@@ -122,8 +121,7 @@ void effect_chase()
     for(int i = 0;millis() < stop ;) 
     {
         i = scroll(&eff, buffer, i, num_leds);
-        //i = scroll(&eff, buffer, i, -num_leds);
-        delay(20000);
+        i = scroll(&eff, buffer, i, -num_leds);
     }
 }
 

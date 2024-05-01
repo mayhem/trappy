@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define randi(r) (rand() % (r));
+#define randf() ((float)rand()/(float)(RAND_MAX))
+
 const uint16_t num_leds = 144;
 const uint16_t num_strips = 8;
 const uint16_t total_leds = num_leds * num_strips;

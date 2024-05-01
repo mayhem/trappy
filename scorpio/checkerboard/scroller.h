@@ -11,6 +11,7 @@ void pattern_all(effect_t *eff, unsigned int row, color_t data[num_strips]);
 void row_random(effect_t *eff, unsigned int index, color_t col[num_strips]);
 void row_rainbow(effect_t *eff, unsigned int index, color_t col[num_strips]);
 void row_binary(effect_t *eff, unsigned int index, color_t col[num_strips]);
+void row_matrix(effect_t *eff, unsigned int index, color_t col[num_strips]);
 void shift(effect_t *eff, unsigned int index, color_t buffer[total_leds], color_t *new_row, uint8_t direction);
 unsigned int scroll(effect_t *eff, color_t buffer[total_leds], unsigned int row_index, int num_rows);
 
