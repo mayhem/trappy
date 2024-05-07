@@ -4,6 +4,10 @@ from math import sin
 import smi_leds
 from random import randint
 from gradient import Gradient
+from scroller import EffectChase
+
+NUM_LEDS = 144
+NUM_STRIPS = 8
 
 def rand_color():
     return (randint(128, 255), randint(128, 255), randint(128, 255))
@@ -12,8 +16,8 @@ def rand_color():
 class Trappy:
 
     def __init__(self):
-        self.leds = 144
-        self.strips = 8
+        self.leds = NUM_STRIPS
+        self.strips = NUM_LEDS
 
         smi_leds.leds_init(self.leds, 20)
         smi_leds.leds_clear()
@@ -41,22 +45,6 @@ class Trappy:
         smi_leds.leds_set(leds)
         smi_leds.leds_send()
 
-    def test_gradient(self):
-        self.pixels.fill((0, 0, 0))
-        g = [[0.0, [128, 0, 0]],
-             [.5,  [0, 128, 0]],
-             [1.0, [127, 128, 0]]]
-        gr = Gradient(g, leds=self.leds)
-        t = 0.0
-        while True:
-            for i in range(144):
-                gr.palette[1][0] = .5 + sin(t) / 4
-                color = gr.get_color(i)
-                for j in range(8):
-                    self.set_led(j, i, color)
-            smi_leds.leds_send()
-            t += .1
-
     def gradient_test(self):
 
         g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 0, 255]], [1.0, [255, 80, 0]]])
@@ -73,12 +61,15 @@ class Trappy:
 
             smi_leds.leds_set(buf)
             smi_leds.leds_send()
-   
+
+    def effect_chase(self):
+        eff = EffectChase()
+        eff.run()
 
 if __name__ == "__main__":
     t = Trappy()
     try:
-        t.gradient_test()
+        t.effect_chase()
     except KeyboardInterrupt:
         t.clear()
         sleep(.1)
