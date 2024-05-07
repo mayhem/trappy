@@ -96,5 +96,6 @@ if __name__ == "__main__":
             t.effect_checkerboard(monotonic() + duration)
             t.effect_gradient(monotonic() + duration)
     except KeyboardInterrupt:
+        print("shutting down")
         t.clear()
-        sleep(.1)
+        sleep(.5)
