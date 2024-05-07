@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from gradient import Gradient
 from random import random
+from time import sleep
 
 import smi_leds
-from main import NUM_LEDS, NUM_STRIPS
+from defs import NUM_LEDS, NUM_STRIPS
 
 rainbow = [
     (255, 0, 0),
@@ -22,13 +23,13 @@ class Pattern:
         self.row_gen = row_gen
 
     @abstractmethod
-    def get(row_index):
+    def get(self, row_index):
         """ returns color tuple """
         pass
 
 class PatternEveryOther(Pattern):
 
-    def get(row_index):
+    def get(self, row_index):
         if row_index % 2 == 0:
             return self.row_gen.get(row_index)
         else:
@@ -36,7 +37,7 @@ class PatternEveryOther(Pattern):
 
 class PatternAll(Pattern):
 
-    def get(row_index):
+    def get(self, row_index):
         return self.row_gen.get(row_index)
 
 class RowGenerator:
@@ -45,22 +46,25 @@ class RowGenerator:
         self.palette = palette
 
     @abstractmethod
-    def get(row_index):
+    def get(self, row_index):
         """ returns self.strip color tuples """
         pass
 
 
 class RowRainbow(RowGenerator):
     @abstractmethod
-    def get(row_index):
-        return rainbow
+    def get(self, row_index):
+        row = bytearray()
+        for col in rainbow:
+            row += bytearray((col[0], col[1], col[2], 0))
+        return row
 
 class RowRandom(RowGenerator):
 
-    def get(row_index):
+    def get(self, row_index):
         row = bytearray()
+        col = self.palette.get_color(random())
         for i in range(NUM_STRIPS):
-            col = self.palette.get_color(random())
             row += bytearray((col[0], col[1], col[2], 0))
 
         return row
@@ -78,18 +82,20 @@ class Effect:
             self.shift(buf, row, direction)
             smi_leds.leds_set(buf)
             smi_leds.leds_send()
+            sleep(1)
             row_index += 1
 
         return row_index
 
-    def shift(buf, new_row, direction):
+    def shift(self, buf, new_row, direction):
         for strip in range(NUM_STRIPS):
             offset = strip * NUM_LEDS * 4
             length = NUM_STRIPS * NUM_LEDS * 4
             row_length = NUM_STRIPS * 4
-            if direction == INWARD:
+            if direction == 0:
                 buf[offset:offset+length-1] = buf[offset + row_length:offset+length-1] + new_row
             else:
+                print(type(new_row))
                 buf[offset:offset+length-1] = new_row + buf[offset:offset+length-1-row_length] 
 
     @abstractmethod
@@ -100,8 +106,19 @@ class EffectChase(Effect):
 
     def run(self):
         buf = bytearray((0,0,0,0) * NUM_LEDS * NUM_STRIPS)
-        pattern = PatternEveryOther(RowRandom())
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 0, 255]], [1.0, [255, 80, 0]]])
+        pattern = PatternEveryOther(RowRandom(palette))
+
+        row_gen = RowRandom(palette)
+
+        buf = bytearray()
+        for i in range(NUM_LEDS):
+            buf += row_gen.get(i)
+        smi_leds.leds_set(buf)
+        smi_leds.leds_send()
+        return
+
+
       
         row_index = 0
         while True:

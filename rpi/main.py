@@ -1,13 +1,12 @@
-from time import sleep
+from time import sleep, monotonic
+from random import seed
 from math import sin
 
 import smi_leds
 from random import randint
 from gradient import Gradient
 from scroller import EffectChase
-
-NUM_LEDS = 144
-NUM_STRIPS = 8
+from defs import NUM_LEDS, NUM_STRIPS
 
 def rand_color():
     return (randint(128, 255), randint(128, 255), randint(128, 255))
@@ -16,8 +15,8 @@ def rand_color():
 class Trappy:
 
     def __init__(self):
-        self.leds = NUM_STRIPS
-        self.strips = NUM_LEDS
+        self.strips = NUM_STRIPS
+        self.leds = NUM_LEDS
 
         smi_leds.leds_init(self.leds, 20)
         smi_leds.leds_clear()
@@ -45,11 +44,14 @@ class Trappy:
         smi_leds.leds_set(leds)
         smi_leds.leds_send()
 
-    def gradient_test(self):
+    def effect_gradient(self, timeout):
 
-        g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 0, 255]], [1.0, [255, 80, 0]]])
+        g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 255, 0]], [1.0, [255, 80, 0]]])
         buf = bytearray((0,0,0,0) * self.leds * self.strips)
         for i in range(1000): 
+            if monotonic() > timeout:
+                return
+
             t = i / 10
             wiggle = (sin(t/8) / 8.0) + .5 + (sin(t*3) / 12);
             g.palette[1][0] = wiggle
@@ -66,10 +68,33 @@ class Trappy:
         eff = EffectChase()
         eff.run()
 
+    def effect_checkerboard(self, timeout):
+        leds = bytearray((0,) * self.leds * self.strips * 4)
+        row = 0
+
+        while monotonic() < timeout:
+            for strip in range(self.strips):
+                for led in range(self.leds):
+                    if led // 4 % 2 == row % 2:
+                        color = ( 255, 0, 0 )
+                    else:
+                        color = ( 0, 0, 255 )
+                    self.set_led(leds, strip, led, color)
+
+            smi_leds.leds_set(leds)
+            smi_leds.leds_send()
+            row += 1
+
 if __name__ == "__main__":
+
+    duration = 10 
+
+    seed(monotonic())
     t = Trappy()
     try:
-        t.effect_chase()
+        while True:
+            t.effect_checkerboard(monotonic() + duration)
+            t.effect_gradient(monotonic() + duration)
     except KeyboardInterrupt:
         t.clear()
         sleep(.1)
