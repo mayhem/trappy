@@ -1,1 +1,1 @@
-pyserial
+smi_leds@git+https://github.com/mayhem/rpi_smi_led.git@main
