@@ -6,6 +6,7 @@ import smi_leds
 from random import randint
 from gradient import Gradient
 from scroller import EffectChase
+from gradient_scroller import EffectGradientChase
 from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 
@@ -20,7 +21,7 @@ class Trappy:
         self.leds = NUM_LEDS
 
         self.driver = LEDDriver(self.strips, self.leds)
-        for i in range(3):
+        for i in range(0):
             self.driver.fill((255, 0, 255))
             sleep(.1)
             self.driver.fill((255, 60, 0))
@@ -29,7 +30,6 @@ class Trappy:
         self.driver.clear()
 
     def effect_gradient(self, timeout):
-
         g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 255, 0]], [1.0, [255, 80, 0]]])
         for i in range(1000): 
             if monotonic() > timeout:
@@ -48,6 +48,10 @@ class Trappy:
 
     def effect_chase(self, timeout):
         eff = EffectChase(self.driver)
+        eff.run(timeout)
+
+    def effect_gradient_chase(self, timeout):
+        eff = EffectGradientChase(self.driver)
         eff.run(timeout)
 
     def effect_checkerboard(self, timeout):
@@ -74,10 +78,12 @@ if __name__ == "__main__":
     t = Trappy()
     try:
         while True:
+#            t.effect_gradient_chase(monotonic() + duration)
             t.effect_chase(monotonic() + duration)
             t.effect_gradient(monotonic() + duration)
             t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
+        t.driver.clear()
         t.driver.clear()
         sleep(1)

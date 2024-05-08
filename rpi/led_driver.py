@@ -11,14 +11,6 @@ class LEDDriver:
         smi_leds.leds_init(self.leds, 15)
         smi_leds.leds_clear()
 
-        for i in range(3):
-            self.fill((255, 0, 255))
-            sleep(.1)
-            self.fill((255, 60, 0))
-            sleep(.1)
-
-        smi_leds.leds_clear()
-
     def clear(self):
         smi_leds.leds_clear()
 

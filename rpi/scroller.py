@@ -3,6 +3,7 @@ from gradient import Gradient
 from random import random
 from time import sleep, monotonic
 from colorsys import hsv_to_rgb
+from effect import Effect
 
 import smi_leds
 from defs import NUM_LEDS, NUM_STRIPS
@@ -78,39 +79,6 @@ class RowRandomRainbow(RowGenerator):
             col = [int(255 * r), int(255 *g), int(255 * b)]
             row.append(col)
         return row
-
-class Effect:
-
-    def __init__(self, driver):
-        self.driver = driver
-
-    def scroll(self, pattern, buf, row_index, num_rows):
-        direction = 1 if num_rows > 0 else 0;
-        for j in range(abs(num_rows)):
-            row = pattern.get(row_index)
-            self.shift(buf, row, direction)
-            self.driver.set(buf)
-            row_index += 1
-
-        return row_index
-
-    def shift(self, buf, new_row, direction):
-        for strip in range(NUM_STRIPS):
-            begin = strip * NUM_LEDS
-            end = (strip + 1) * NUM_LEDS;
-            if direction == 1:
-                temp = buf[begin:end-1]
-                temp.insert(0, new_row[strip])
-                buf[begin:end] = temp
-            else:
-                temp = buf[begin+1:end]
-                temp.append(new_row[strip])
-                buf[begin:end] = temp
-
-
-    @abstractmethod
-    def run(self):
-        pass
 
 class EffectChase(Effect):
 
