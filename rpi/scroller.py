@@ -33,7 +33,7 @@ class PatternEveryOther(Pattern):
         if row_index % 2 == 0:
             return self.row_gen.get(row_index)
         else:
-            return [0,0,0,0] * NUM_STRIPS
+            return [0,0,0] * NUM_STRIPS
 
 class PatternAll(Pattern):
 
@@ -56,7 +56,7 @@ class RowRainbow(RowGenerator):
     def get(self, row_index):
         row = bytearray()
         for col in rainbow:
-            row += bytearray((col[0], col[1], col[2], 0))
+            row += bytearray(col)
         return row
 
 class RowRandom(RowGenerator):
@@ -65,7 +65,7 @@ class RowRandom(RowGenerator):
         row = bytearray()
         col = self.palette.get_color(random())
         for i in range(NUM_STRIPS):
-            row += bytearray((col[0], col[1], col[2], 0))
+            row += bytearray(col)
 
         return row
 

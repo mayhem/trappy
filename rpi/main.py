@@ -32,22 +32,25 @@ class Trappy:
     def clear(self):
         smi_leds.leds_clear()
 
-    def set_led(self, leds: bytearray, strip: int, led: int, color: tuple):
-        offset = (strip * self.leds + led) * 4
-        leds[offset] = color[2]
-        leds[offset + 1] = color[1]
-        leds[offset + 2] = color[0]
+    def set_led(self, leds: list, strip: int, led: int, color: tuple):
+        leds[strip * NUM_LEDS + led] = color
 
     def fill(self, color):
-        col = (color[2], color[1], color[0], 0)
-        leds = bytearray(col * self.leds * self.strips)
+        leds = bytearray(color * self.leds * self.strips)
         smi_leds.leds_set(leds)
+        smi_leds.leds_send()
+
+    def set(self, buf):
+        ba = bytearray()
+        for col in buf:
+            ba += bytearray(col)
+
+        smi_leds.leds_set(ba)
         smi_leds.leds_send()
 
     def effect_gradient(self, timeout):
 
         g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 255, 0]], [1.0, [255, 80, 0]]])
-        buf = bytearray((0,0,0,0) * self.leds * self.strips)
         for i in range(1000): 
             if monotonic() > timeout:
                 return
@@ -55,34 +58,32 @@ class Trappy:
             t = i / 10
             wiggle = (sin(t/8) / 8.0) + .5 + (sin(t*3) / 12);
             g.palette[1][0] = wiggle
-            for j in range(self.leds):
-                for k in range(self.strips):
-                    # TODO: Make additive
-                    color = g.get_color(float(j) / self.leds)
-                    self.set_led(buf, k, j, color)
+            buf = []
+            for k in range(self.strips):
+                for j in range(self.leds):
+                    col = g.get_color(float(j) / self.leds)
+                    buf.append(col)
 
-            smi_leds.leds_set(buf)
-            smi_leds.leds_send()
+            self.set(buf)
 
     def effect_chase(self):
         eff = EffectChase()
         eff.run()
 
     def effect_checkerboard(self, timeout):
-        leds = bytearray((0,) * self.leds * self.strips * 4)
         row = 0
 
         while monotonic() < timeout:
+            buf = []
             for strip in range(self.strips):
                 for led in range(self.leds):
                     if led // 4 % 2 == row % 2:
                         color = ( 255, 0, 0 )
                     else:
                         color = ( 0, 0, 255 )
-                    self.set_led(leds, strip, led, color)
+                    buf.append(color)
 
-            smi_leds.leds_set(leds)
-            smi_leds.leds_send()
+            self.set(buf)
             row += 1
 
 if __name__ == "__main__":
@@ -93,8 +94,9 @@ if __name__ == "__main__":
     t = Trappy()
     try:
         while True:
-            t.effect_checkerboard(monotonic() + duration)
-            t.effect_gradient(monotonic() + duration)
+            t.effect_chase()
+#            t.effect_gradient(monotonic() + duration)
+#            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
         t.clear()
