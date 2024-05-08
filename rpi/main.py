@@ -7,6 +7,7 @@ from random import randint
 from gradient import Gradient
 from scroller import EffectChase
 from defs import NUM_LEDS, NUM_STRIPS
+from led_driver import LEDDriver
 
 def rand_color():
     return (randint(128, 255), randint(128, 255), randint(128, 255))
@@ -18,35 +19,14 @@ class Trappy:
         self.strips = NUM_STRIPS
         self.leds = NUM_LEDS
 
-        smi_leds.leds_init(self.leds, 20)
-        smi_leds.leds_clear()
-
+        self.driver = LEDDriver(self.strips, self.leds)
         for i in range(3):
-            self.fill((255, 0, 255))
+            self.driver.fill((255, 0, 255))
             sleep(.1)
-            self.fill((255, 60, 0))
+            self.driver.fill((255, 60, 0))
             sleep(.1)
 
-        smi_leds.leds_clear()
-
-    def clear(self):
-        smi_leds.leds_clear()
-
-    def set_led(self, leds: list, strip: int, led: int, color: tuple):
-        leds[strip * NUM_LEDS + led] = color
-
-    def fill(self, color):
-        leds = bytearray(color * self.leds * self.strips)
-        smi_leds.leds_set(leds)
-        smi_leds.leds_send()
-
-    def set(self, buf):
-        ba = bytearray()
-        for col in buf:
-            ba += bytearray(col)
-
-        smi_leds.leds_set(ba)
-        smi_leds.leds_send()
+        self.driver.clear()
 
     def effect_gradient(self, timeout):
 
@@ -64,11 +44,11 @@ class Trappy:
                     col = g.get_color(float(j) / self.leds)
                     buf.append(col)
 
-            self.set(buf)
+            self.driver.set(buf)
 
-    def effect_chase(self):
-        eff = EffectChase()
-        eff.run()
+    def effect_chase(self, timeout):
+        eff = EffectChase(self.driver)
+        eff.run(timeout)
 
     def effect_checkerboard(self, timeout):
         row = 0
@@ -83,7 +63,7 @@ class Trappy:
                         color = ( 0, 0, 255 )
                     buf.append(color)
 
-            self.set(buf)
+            self.driver.set(buf)
             row += 1
 
 if __name__ == "__main__":
@@ -94,10 +74,10 @@ if __name__ == "__main__":
     t = Trappy()
     try:
         while True:
-            t.effect_chase()
-#            t.effect_gradient(monotonic() + duration)
-#            t.effect_checkerboard(monotonic() + duration)
+            t.effect_chase(monotonic() + duration)
+            t.effect_gradient(monotonic() + duration)
+            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
-        t.clear()
-        sleep(.5)
+        t.driver.clear()
+        sleep(1)
