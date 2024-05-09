@@ -89,5 +89,5 @@ class EffectChase(Effect):
 
         row_index = 0
         while monotonic() < timeout:
-            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS)
+            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 6)
             row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS)

@@ -1,5 +1,5 @@
 from time import sleep, monotonic
-from random import seed
+from random import seed, randint
 from math import sin
 
 import smi_leds
@@ -30,13 +30,13 @@ class Trappy:
         self.driver.clear()
 
     def effect_gradient(self, timeout):
-        g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 255, 0]], [1.0, [255, 80, 0]]])
+        g = Gradient([[0.0, [255, 0, 0]], [.5, [255, 0, 255]], [1.0, [255, 80, 0]]])
         for i in range(1000): 
             if monotonic() > timeout:
                 return
 
             t = i / 10
-            wiggle = (sin(t/8) / 8.0) + .5 + (sin(t*3) / 12);
+            wiggle = (sin(t/8) / 6.0) + .5 + (sin(t*3) / 12);
             g.palette[1][0] = wiggle
             buf = []
             for k in range(self.strips):
@@ -52,7 +52,7 @@ class Trappy:
 
     def effect_gradient_chase(self, timeout):
         eff = EffectGradientChase(self.driver)
-        eff.run(timeout)
+        eff.run(timeout, randint(0, 2))
 
     def effect_checkerboard(self, timeout):
         row = 0
@@ -72,16 +72,15 @@ class Trappy:
 
 if __name__ == "__main__":
 
-    duration = 10 
+    duration =12 
 
     seed(monotonic())
     t = Trappy()
     try:
         while True:
             t.effect_gradient_chase(monotonic() + duration)
-#            t.effect_chase(monotonic() + duration)
-#            t.effect_gradient(monotonic() + duration)
-#            t.effect_checkerboard(monotonic() + duration)
+            t.effect_chase(monotonic() + duration)
+            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
         t.driver.clear()

@@ -19,12 +19,19 @@ class EffectGradientChase(Effect):
         super().__init__(driver)
         self.hue = 0.0
 
-    def point_generator_stripes(self, offset, row_index):
+    def point_generator_hue(self, offset, row_index):
         self.hue += .01
         if row_index % 2 == 0:
             color = hue_to_rgb(self.hue)
         else:
             color = hue_to_rgb(self.hue + .5)
+        return (offset, color)
+
+    def point_generator_stripes(self, offset, row_index):
+        if row_index % 2 == 0:
+            color = (255, 0, 0)
+        else:
+            color = (0, 0, 255)
         return (offset, color)
 
     def point_generator_rainbow(self, offset, row_index):
@@ -42,7 +49,7 @@ class EffectGradientChase(Effect):
 
         return shifted
 
-    def run(self, timeout):
+    def run(self, timeout, variant):
 
         row_index = 0
         offset = -.5
@@ -50,7 +57,13 @@ class EffectGradientChase(Effect):
         shift_dist = .02
         palette = []
         while True:
-            palette.append(self.point_generator_stripes(offset, row_index))
+            if variant == 0:
+                palette.append(self.point_generator_rainbow(offset, row_index))
+            if variant == 1:
+                palette.append(self.point_generator_hue(offset, row_index))
+            if variant == 2:
+                palette.append(self.point_generator_stripes(offset, row_index))
+
             row_index += 1
             offset += spacing
             if palette[-1][0] > 1.5:
@@ -58,8 +71,8 @@ class EffectGradientChase(Effect):
 
         g = Gradient(palette)
         while True:
-#            if monotonic() > timeout:
-#                return
+            if monotonic() > timeout:
+                return
 
             buf = []
             for k in range(self.driver.strips):
