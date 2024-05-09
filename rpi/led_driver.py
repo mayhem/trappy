@@ -25,7 +25,10 @@ class LEDDriver:
     def set(self, buf):
         ba = bytearray()
         for col in buf:
-            ba += bytearray(col)
+            try:
+                ba += bytearray(col)
+            except ValueError:
+                raise ValueError(col, " is invalid")
 
         smi_leds.leds_set(ba)
         smi_leds.leds_send()

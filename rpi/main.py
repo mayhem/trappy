@@ -78,10 +78,10 @@ if __name__ == "__main__":
     t = Trappy()
     try:
         while True:
-#            t.effect_gradient_chase(monotonic() + duration)
-            t.effect_chase(monotonic() + duration)
-            t.effect_gradient(monotonic() + duration)
-            t.effect_checkerboard(monotonic() + duration)
+            t.effect_gradient_chase(monotonic() + duration)
+#            t.effect_chase(monotonic() + duration)
+#            t.effect_gradient(monotonic() + duration)
+#            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
         t.driver.clear()

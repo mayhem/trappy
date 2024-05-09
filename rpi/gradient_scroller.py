@@ -10,28 +10,36 @@ class EffectGradientChase(Effect):
 
     def point_generator(self, offset, row_index):
         if row_index % 2 == 0:
-            color = (255, 0, 0)
+            color = (255, 60, 0)
         else:
-            color = (0, 0, 255)
+            color = (255, 0, 255)
         return (offset, color)
 
     def shift(self, palette, dist):
         shifted = []
         dropped = 0
         for offset, color in palette:
-            if offset + dist < 1.0: 
+            if offset + dist < 1.5: 
                 shifted.append((offset + dist, color))
             else:
-                dropped += 1
-
-        for i in range(dropped):
-            shifted.insert(0, self.point_generator(shifted[0][0] - dist, i))
+                shifted.insert(0, (-.5, color))
 
         return shifted
 
     def run(self, timeout):
 
-        palette = [ self.point_generator(o / 20, o) for o in range(22) ]
+        row_index = 0
+        offset = -.5
+        spacing = .1
+        shift_dist = .02
+        palette = []
+        while True:
+            palette.append(self.point_generator(offset, row_index))
+            row_index += 1
+            offset += spacing
+            if palette[-1][0] > 1.5:
+                break
+
         g = Gradient(palette)
         for i in range(1000): 
             if monotonic() > timeout:
@@ -44,6 +52,4 @@ class EffectGradientChase(Effect):
                     buf.append(col)
 
             self.driver.set(buf)
-
-            g.palette = self.shift(g.palette, .05)
-            print(g.palette)
+            g.palette = self.shift(g.palette, shift_dist)
