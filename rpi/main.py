@@ -11,9 +11,6 @@ from gradient_scroller import EffectGradientChase
 from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 
-def rand_color():
-    return (randint(128, 255), randint(128, 255), randint(128, 255))
-
 
 class Trappy:
 
@@ -74,15 +71,15 @@ class Trappy:
 
 if __name__ == "__main__":
 
-    duration =12 
+    duration = 2 
 
     seed(monotonic())
     t = Trappy()
     try:
         while True:
             t.effect_gradient_chase(monotonic() + duration)
-#            t.effect_chase(monotonic() + duration)
-#            t.effect_checkerboard(monotonic() + duration)
+            t.effect_chase(monotonic() + duration)
+            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
         t.driver.clear()

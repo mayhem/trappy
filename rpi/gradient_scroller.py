@@ -3,9 +3,9 @@ from colorsys import hsv_to_rgb
 from time import sleep, monotonic
 
 from gradient import Gradient
-from random import random
+from random import random, randint
 from effect import Effect
-from color import hue_to_rgb
+from color import hue_to_rgb, random_color
 
 
 class EffectGradientChase(Effect):
@@ -13,6 +13,8 @@ class EffectGradientChase(Effect):
     def __init__(self, driver):
         super().__init__(driver)
         self.hue = 0.0
+
+        self.colors = [ random_color() for i in range(4) ]
 
     def point_generator_hue(self, offset, row_index):
         self.hue += .01
@@ -23,18 +25,10 @@ class EffectGradientChase(Effect):
         return (offset, color)
 
     def point_generator_stripes(self, offset, row_index):
-        if row_index % 2 == 0:
-            color = (255, 0, 0)
-        else:
-            color = (0, 0, 255)
-        return (offset, color)
+        return (offset, self.colors[row_index % 2])
 
-    def point_generator_stripes(self, offset, row_index):
-        if row_index % 2 == 0:
-            color = (255, 0, 0)
-        else:
-            color = (0, 0, 255)
-        return (offset, color)
+    def point_generator_triples(self, offset, row_index):
+        return (offset, self.colors[row_index % 3])
 
     def point_generator_rainbow(self, offset, row_index):
         self.hue += .2
@@ -65,6 +59,10 @@ class EffectGradientChase(Effect):
 
     def run(self, timeout, variant):
 
+        variant = 3
+
+        direction = randint(0, 1)
+
         row_index = 0
         offset = -.5
         spacing = .1
@@ -77,6 +75,8 @@ class EffectGradientChase(Effect):
                 palette.append(self.point_generator_hue(offset, row_index))
             if variant == 2:
                 palette.append(self.point_generator_stripes(offset, row_index))
+            if variant == 3:
+                palette.append(self.point_generator_triples(offset, row_index))
 
             row_index += 1
             offset += spacing
@@ -95,4 +95,8 @@ class EffectGradientChase(Effect):
                     buf.append(col)
 
             self.driver.set(buf)
-            g.palette = self.shift(g.palette, -shift_dist)
+            if direction == 0:
+                dist = shift_dist
+            else:
+                dist = -shift_dist
+            g.palette = self.shift(g.palette, dist)
