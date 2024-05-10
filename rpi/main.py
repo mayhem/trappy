@@ -1,5 +1,6 @@
 from time import sleep, monotonic
-from random import seed, randint
+from random import seed, randint, random
+from color import hue_to_rgb
 from math import sin
 
 import smi_leds
@@ -57,14 +58,15 @@ class Trappy:
     def effect_checkerboard(self, timeout):
         row = 0
 
+        hue = random()
         while monotonic() < timeout:
             buf = []
             for strip in range(self.strips):
                 for led in range(self.leds):
-                    if led // 4 % 2 == row % 2:
-                        color = ( 255, 0, 0 )
+                    if led // 8 % 2 == row % 2:
+                        color = hue_to_rgb(hue)
                     else:
-                        color = ( 0, 0, 255 )
+                        color = hue_to_rgb(hue + .35)
                     buf.append(color)
 
             self.driver.set(buf)
@@ -79,8 +81,8 @@ if __name__ == "__main__":
     try:
         while True:
             t.effect_gradient_chase(monotonic() + duration)
-            t.effect_chase(monotonic() + duration)
-            t.effect_checkerboard(monotonic() + duration)
+#            t.effect_chase(monotonic() + duration)
+#            t.effect_checkerboard(monotonic() + duration)
     except KeyboardInterrupt:
         print("shutting down")
         t.driver.clear()

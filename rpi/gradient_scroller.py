@@ -1,16 +1,11 @@
 from abc import abstractmethod
-from math import fmod
 from colorsys import hsv_to_rgb
 from time import sleep, monotonic
 
 from gradient import Gradient
 from random import random
 from effect import Effect
-
-
-def hue_to_rgb(hue):
-    r,g,b = hsv_to_rgb(fmod(hue, 1.0), 1.0, 1.0)
-    return (int(r * 255), int(g * 255), int(b * 255))
+from color import hue_to_rgb
 
 
 class EffectGradientChase(Effect):
@@ -34,20 +29,39 @@ class EffectGradientChase(Effect):
             color = (0, 0, 255)
         return (offset, color)
 
+    def point_generator_stripes(self, offset, row_index):
+        if row_index % 2 == 0:
+            color = (255, 0, 0)
+        else:
+            color = (0, 0, 255)
+        return (offset, color)
+
     def point_generator_rainbow(self, offset, row_index):
         self.hue += .2
         return (offset, hue_to_rgb(self.hue))
 
     def shift(self, palette, dist):
-        shifted = []
-        dropped = 0
-        for offset, color in palette:
-            if offset + dist < 1.5: 
-                shifted.append((offset + dist, color))
-            else:
-                shifted.insert(0, (-.5, color))
 
-        return shifted
+        if dist > 0:
+            direction = 1
+        else:
+            direction = 0
+
+        shifted = []
+        for offset, color in palette:
+            new_offset = offset + dist
+            if direction == 1:
+                if new_offset < 1.5: 
+                    shifted.append((new_offset, color))
+                else:
+                    shifted.append((-.5, color))
+            else:
+                if new_offset + dist > -.5: 
+                    shifted.append((new_offset, color))
+                else:
+                    shifted.append((1.5, color))
+
+        return sorted(shifted, key=lambda a: a[0])
 
     def run(self, timeout, variant):
 
@@ -81,4 +95,4 @@ class EffectGradientChase(Effect):
                     buf.append(col)
 
             self.driver.set(buf)
-            g.palette = self.shift(g.palette, shift_dist)
+            g.palette = self.shift(g.palette, -shift_dist)

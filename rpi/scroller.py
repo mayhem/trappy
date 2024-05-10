@@ -85,7 +85,7 @@ class EffectChase(Effect):
     def run(self, timeout):
         buf = [[0,0,0] for i in range(NUM_LEDS * NUM_STRIPS)]
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 80, 255]], [1.0, [0, 0, 255]]])
-        pattern = PatternEveryOther(RowRandomRainbow(palette))
+        pattern = PatternEveryOther(RowRandom(palette))
 
         row_index = 0
         while monotonic() < timeout:
