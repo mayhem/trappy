@@ -5803,15 +5803,6 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "614ad84d-a66c-4092-8999-9db806adac48")
-		(property "Reference" "J2"
-			(at 141.8941 102.87 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(property "Value" "RPi"
 			(at 141.8941 105.41 0)
 			(effects
