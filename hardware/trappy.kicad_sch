@@ -5567,7 +5567,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SN74AHCT125RGYR"
+		(property "Value" "SN74AHCT125PWR"
 			(at 211.7441 125.73 0)
 			(effects
 				(font
@@ -5576,7 +5576,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Texas_S-PVQFN-N14"
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 209.55 142.24 0)
 			(effects
 				(font
@@ -5803,6 +5803,15 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "614ad84d-a66c-4092-8999-9db806adac48")
+		(property "Reference" "J2"
+			(at 139.7 69.85 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(property "Value" "RPi"
 			(at 141.8941 105.41 0)
 			(effects
@@ -5987,7 +5996,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SN74AHCT125RGYR"
+		(property "Value" "SN74AHCT125PWR"
 			(at 51.7241 125.73 0)
 			(effects
 				(font
@@ -5996,7 +6005,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Texas_S-PVQFN-N14"
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 49.53 142.24 0)
 			(effects
 				(font
@@ -6785,7 +6794,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "d1f08e9e-584c-4100-8aaa-dc6eb095f786")
 		(property "Reference" "U2"
 			(at 103.7941 123.19 0)
@@ -6796,7 +6804,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SN74AHCT125RGYR"
+		(property "Value" "SN74AHCT125PWR"
 			(at 103.7941 125.73 0)
 			(effects
 				(font
@@ -6805,7 +6813,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Texas_S-PVQFN-N14"
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 101.6 142.24 0)
 			(effects
 				(font
@@ -7113,7 +7121,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SN74AHCT125RGYR"
+		(property "Value" "SN74AHCT125PWR"
 			(at 157.1341 125.73 0)
 			(effects
 				(font
@@ -7122,7 +7130,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Texas_S-PVQFN-N14"
+		(property "Footprint" "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
 			(at 154.94 142.24 0)
 			(effects
 				(font
