@@ -3104,7 +3104,7 @@
 		(descr "TSSOP, 14 Pin (JEDEC MO-153 Var AB-1 https://www.jedec.org/document_search?search_api_views_fulltext=MO-153), generated with kicad-footprint-generator ipc_gullwing_generator.py")
 		(tags "TSSOP SO")
 		(property "Reference" "U1"
-			(at 0 -3.45 360)
+			(at 0 -3.45 0)
 			(layer "F.SilkS")
 			(uuid "72a42225-4e98-4167-a66d-9b93e4c891fd")
 			(effects
@@ -3115,7 +3115,7 @@
 			)
 		)
 		(property "Value" "SN74AHCT125PWR"
-			(at 0 3.45 360)
+			(at 0 3.45 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ab734b4a-af58-4d43-ac42-9ceb8b279054")
@@ -3310,7 +3310,7 @@
 			(uuid "1b04b20b-c130-44f6-bd5d-4a0b16fb1863")
 		)
 		(fp_text user "${REFERENCE}"
-			(at -1.25 0.0375 360)
+			(at -1.25 0.0375 0)
 			(layer "F.Fab")
 			(uuid "010dd657-e1de-4bd2-8431-7b9815bcd18c")
 			(effects
@@ -9162,7 +9162,7 @@
 		(descr "TSSOP, 14 Pin (JEDEC MO-153 Var AB-1 https://www.jedec.org/document_search?search_api_views_fulltext=MO-153), generated with kicad-footprint-generator ipc_gullwing_generator.py")
 		(tags "TSSOP SO")
 		(property "Reference" "U3"
-			(at 0 -3.45 360)
+			(at 0 -3.45 0)
 			(layer "F.SilkS")
 			(uuid "eeb0c8e6-4724-448e-a277-f0758b6ba90c")
 			(effects
@@ -9173,7 +9173,7 @@
 			)
 		)
 		(property "Value" "SN74AHCT125PWR"
-			(at 0 3.45 360)
+			(at 0 3.45 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ac5771f0-364d-470a-a914-9a4da851c380")
@@ -9368,7 +9368,7 @@
 			(uuid "904ac1f3-094c-4978-b605-f4bee67aea94")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "c4dddbd5-d1a3-45af-a3db-f9d5a4ac758d")
 			(effects
@@ -10893,7 +10893,7 @@
 		(descr "TSSOP, 14 Pin (JEDEC MO-153 Var AB-1 https://www.jedec.org/document_search?search_api_views_fulltext=MO-153), generated with kicad-footprint-generator ipc_gullwing_generator.py")
 		(tags "TSSOP SO")
 		(property "Reference" "U2"
-			(at 0 -3.45 360)
+			(at 0 -3.45 0)
 			(layer "F.SilkS")
 			(uuid "950143f8-0e94-4874-be56-e7e2ae98c70a")
 			(effects
@@ -10904,7 +10904,7 @@
 			)
 		)
 		(property "Value" "SN74AHCT125PWR"
-			(at 0 3.45 360)
+			(at 0 3.45 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b9a7cceb-3f30-4ea7-b498-604489965700")
@@ -11099,7 +11099,7 @@
 			(uuid "b576868f-1557-4f6f-954a-c9888ec623d7")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "00288a45-75b7-4e58-b9eb-3d3270df87f5")
 			(effects
@@ -13953,7 +13953,7 @@
 		)
 	)
 	(gr_text "5V"
-		(at 179.65 95.65 0)
+		(at 182 102.325 90)
 		(layer "F.SilkS")
 		(uuid "4509b0ca-d45a-4d82-9d9b-d6a031a9816d")
 		(effects
@@ -14097,7 +14097,7 @@
 		)
 	)
 	(gr_text "LED"
-		(at 182.375 103 90)
+		(at 179.225 95.65 0)
 		(layer "F.SilkS")
 		(uuid "df833958-3cd1-4495-bfa3-f8a35ee0fc9f")
 		(effects
