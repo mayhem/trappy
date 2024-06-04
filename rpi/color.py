@@ -7,5 +7,5 @@ def hue_to_rgb(hue):
     return (int(r * 255), int(g * 255), int(b * 255))
 
 def random_color():
-    return (randint(32, 255), randint(32, 255), randint(32, 255))
+    return (randint(0, 255), randint(0, 255), randint(0, 255))
 

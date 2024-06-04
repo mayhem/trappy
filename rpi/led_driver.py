@@ -8,7 +8,7 @@ class LEDDriver:
         self.strips = leds
         self.leds = strips
 
-        smi_leds.leds_init(self.leds, 15)
+        smi_leds.leds_init(self.leds, 10)
         smi_leds.leds_clear()
 
     def clear(self):

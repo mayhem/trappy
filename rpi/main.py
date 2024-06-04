@@ -46,11 +46,11 @@ class Trappy:
 
     def effect_chase(self, timeout):
         eff = EffectChase(self.driver)
-        eff.run(timeout)
+        eff.run(timeout, randint(0, 2))
 
     def effect_gradient_chase(self, timeout):
         eff = EffectGradientChase(self.driver)
-        eff.run(timeout, randint(0, 2))
+        eff.run(timeout, randint(0, 3))
 
     def effect_checkerboard(self, timeout):
         row = 0
@@ -71,7 +71,7 @@ class Trappy:
 
 if __name__ == "__main__":
 
-    duration = 2 
+    duration = 12 
 
     seed(monotonic())
     t = Trappy()

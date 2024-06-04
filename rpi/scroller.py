@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from gradient import Gradient
-from random import random
+from random import random, randint
 from time import sleep, monotonic
 from colorsys import hsv_to_rgb
 from effect import Effect
+from color import random_color
 
 import smi_leds
 from defs import NUM_LEDS, NUM_STRIPS
@@ -80,14 +81,61 @@ class RowRandomRainbow(RowGenerator):
             row.append(col)
         return row
 
+class RowSingleDots(RowGenerator):
+
+    def __init__(self, palette, variant):
+        super().__init__(palette)
+        self.col = random_color()
+        self.variant = variant
+
+    def get(self, row_index):
+        row = []
+        for i in range(NUM_STRIPS):
+            index = randint(0, 6)
+            if index == 0:
+                if self.variant == 0:
+                    row.append(rainbow[i])
+                else:
+                    row.append(self.col)
+
+            else:
+                row.append([0, 0, 0])
+        return row
+
+class RowWibble(RowGenerator):
+
+    def __init__(self, palette, variant):
+        super().__init__(palette)
+        self.col = random_color()
+        self.variant = variant
+
+    def get(self, row_index):
+        row = []
+        for i in range(NUM_STRIPS):
+            if self.variant == 0:
+                if i == row_index % NUM_STRIPS:
+                    row.append(self.col)
+                else:
+                    row.append([0, 0, 0])
+
+        return row
+
 class EffectChase(Effect):
 
-    def run(self, timeout):
+    def run(self, timeout, variant):
         buf = [[0,0,0] for i in range(NUM_LEDS * NUM_STRIPS)]
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 80, 255]], [1.0, [0, 0, 255]]])
-        pattern = PatternEveryOther(RowRandom(palette))
+
+        if variant == 0:
+            pattern = PatternAll(RowSingleDots(palette, randint(0, 1)))
+        else:
+            pattern = PatternAll(RowWibble(palette, (0)))
 
         row_index = 0
         while monotonic() < timeout:
-            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 6)
-            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS)
+            row_index = self.scroll(pattern, .01, buf, row_index, NUM_LEDS * 2)
+            row_index = self.scroll(pattern, .01, buf, row_index, -NUM_LEDS * 2)
+            row_index = self.scroll(pattern, .005, buf, row_index, NUM_LEDS)
+            row_index = self.scroll(pattern, .005, buf, row_index, -NUM_LEDS)
+            row_index = self.scroll(pattern, .01, buf, row_index, NUM_LEDS * 2)
+            row_index = self.scroll(pattern, .01, buf, row_index, -NUM_LEDS * 2)

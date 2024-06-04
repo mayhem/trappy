@@ -1,16 +1,18 @@
 from abc import abstractmethod
+from time import sleep
 
 class Effect:
 
     def __init__(self, driver):
         self.driver = driver
 
-    def scroll(self, pattern, buf, row_index, num_rows):
+    def scroll(self, pattern, delay, buf, row_index, num_rows):
         direction = 1 if num_rows > 0 else 0;
         for j in range(abs(num_rows)):
             row = pattern.get(row_index)
             self.shift(buf, row, direction)
             self.driver.set(buf)
+            sleep(delay)
             row_index += 1
 
         return row_index
