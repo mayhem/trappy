@@ -9,6 +9,12 @@ import rtmidi
 class APCMiniMk2Controller:
 
     def __init__(self):
+        self.colors = []
+        self.custom_colors = [ (0,0,0,0) for i in range(8) ]
+        self.saturation = 1.0
+        self.value = 1.0
+
+    def startup(self):
         self.m_out = rtmidi.MidiOut()
         self.m_in = rtmidi.MidiIn()
         available_ports = self.m_out.get_ports()
@@ -16,15 +22,8 @@ class APCMiniMk2Controller:
             self.m_out.open_port(1)
             self.m_in.open_port(1)
 
-        self.custom_colors = [ (0,0,0,0) for i in range(8) ]
-        self.saturation = 1.0
-        self.value = 1.0
-
-    def shutdown(self):
-        del self.m_out
-        del self.m_in
-
-    def init_color_grid(self):
+        self.clear_pads()
+        self.clear_tracks()
         pad_msg = []
         colors = []
         for pad in range(0, 64):
@@ -56,10 +55,13 @@ class APCMiniMk2Controller:
         self.m_out.send_message(msg)
         sleep(.01)
 
-        return colors
+        self.colors = colors
+
+    def shutdown(self):
+        del self.m_out
+        del self.m_in
 
     def set_pad_color(self, pad, color):
-        print(color)
         num_bytes = 8
         msg = [0xF0, 0x47, 0x7F, 0x4F, 0x24]
         msg.extend((num_bytes >> 7, num_bytes & 0x7F))
@@ -86,40 +88,67 @@ class APCMiniMk2Controller:
         self.m_out.send_message([0x96, pad, 0])
         sleep(.005)
 
-    def run(self):
-        self.clear_pads()
-        colors = self.init_color_grid()
+    def clear_tracks(self):
+        for track in range(8):
+            self.m_out.send_message([0x90, 0x64 + track, 0])
+            sleep(.0001)
 
+    def blink_track(self, track):
+        self.m_out.send_message([0x90, track, 2])
+        sleep(.005)
+
+    def clear_track(self, track):
+        self.m_out.send_message([0x90, track, 0])
+        sleep(.005)
+
+    def run(self):
         dest_pad = None
+        current_track = None
         while True:
             m = self.m_in.get_message()
             if m is None:
                 sleep(.01)
                 continue
 
-            # Pad press
+            # key up
+            if m[0][0] == 128: 
+                continue
+
+            # key down
             if m[0][0] == 144: 
-                pad = m[0][1]
-                if pad < 8:
-                    if dest_pad is None:
-                        self.blink_pad_fast(pad)
-                        dest_pad = pad
+                # track press
+                if m[0][1] >= 100 and m[0][1] <= 107:
+                    track = m[0][1]
+                    if current_track is None:
+                        self.blink_track(track)
+                        current_track = track
+                        dest_pad = track - 100
                     else:
-                        # if the user clicks the same pad again, clear it
-                        self.clear_pad(dest_pad)
-                        self.custom_colors[dest_pad] = (0,0,0, 0.0)
-                        dest_pad = None
+                        self.clear_track(current_track)
+                        if track != current_track:
+                            self.blink_track(track)
+                            current_track = track
+                            dest_pad = track - 100
+                        else:
+                            current_track = None
                     continue
 
-                if dest_pad is not None:
-                    self.clear_pad(dest_pad)
-                    color = colors[pad]
-                    r,g,b = hsv_to_rgb(color[3], self.saturation, self.value)
-                    new_color = (int(r * 255),int(g * 255),int(b * 255),color[3])
-                    self.set_pad_color(dest_pad, new_color)
-                    self.custom_colors[dest_pad] = new_color
-                    dest_pad = None
-                    continue
+                # pad press
+                if m[0][1] >= 0 and m[0][1] <= 63:
+                    pad = m[0][1]
+
+                    # Do nothing if you press a custom color button
+                    if pad < 8:
+                        continue
+
+                    if dest_pad is not None:
+                        color = self.colors[pad]
+                        r,g,b = hsv_to_rgb(color[3], self.saturation, self.value)
+                        new_color = (int(r * 255),int(g * 255),int(b * 255),color[3])
+                        self.set_pad_color(dest_pad, new_color)
+                        self.custom_colors[dest_pad] = new_color
+                        continue
+
                 continue
 
             # fader change 
@@ -140,10 +169,12 @@ class APCMiniMk2Controller:
             print(m)
 
 apc = APCMiniMk2Controller()
+apc.startup()
 try:
     apc.run()
 except KeyboardInterrupt:
     print("cleanup")
     apc.clear_pads()
+    apc.clear_tracks()
     sleep(.1)
     apc.shutdown()
