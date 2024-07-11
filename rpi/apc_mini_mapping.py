@@ -10,7 +10,7 @@ class APCMiniMk2Controller:
 
     def __init__(self):
         self.colors = []
-        self.custom_colors = [ (0,0,0,0) for i in range(8) ]
+        self.custom_colors = [ (0,0,0,None) for i in range(8) ]
         self.saturation = 1.0
         self.value = 1.0
 
@@ -101,7 +101,16 @@ class APCMiniMk2Controller:
         self.m_out.send_message([0x90, track, 0])
         sleep(.005)
 
+    def update_color(self, pad, hue):
+        if hue is None:
+            return
+        r,g,b = hsv_to_rgb(hue, self.saturation, self.value)
+        new_color = (int(r * 255),int(g * 255),int(b * 255),hue)
+        self.set_pad_color(pad, new_color)
+        self.custom_colors[pad] = new_color
+
     def run(self):
+
         dest_pad = None
         current_track = None
         while True:
@@ -123,14 +132,19 @@ class APCMiniMk2Controller:
                         self.blink_track(track)
                         current_track = track
                         dest_pad = track - 100
+                        color = self.custom_colors[dest_pad]
+                        self.update_color(dest_pad, color[3])
                     else:
                         self.clear_track(current_track)
                         if track != current_track:
                             self.blink_track(track)
                             current_track = track
                             dest_pad = track - 100
+                            color = self.custom_colors[dest_pad]
+                            self.update_color(dest_pad, color[3])
                         else:
                             current_track = None
+                            dest_pad = None
                     continue
 
                 # pad press
@@ -143,10 +157,7 @@ class APCMiniMk2Controller:
 
                     if dest_pad is not None:
                         color = self.colors[pad]
-                        r,g,b = hsv_to_rgb(color[3], self.saturation, self.value)
-                        new_color = (int(r * 255),int(g * 255),int(b * 255),color[3])
-                        self.set_pad_color(dest_pad, new_color)
-                        self.custom_colors[dest_pad] = new_color
+                        self.update_color(dest_pad, color[3])
                         continue
 
                 continue
@@ -158,10 +169,15 @@ class APCMiniMk2Controller:
                 # Saturation
                 if fader == 48:
                     self.saturation = m[0][2] / 127.0
+                    if dest_pad is not None:
+                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+                        
                     continue
                 # Value
                 if fader == 49:
                     self.value = m[0][2] / 127.0
+                    if dest_pad is not None:
+                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
                     continue
 
                 continue
