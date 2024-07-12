@@ -20,7 +20,7 @@ class ControlMessage:
         return self.color_val
 
 
-class MidiControl()
+class MidiControl:
     """ Maps midi control input to parametric inputs. Sliders are 0-100%, but input might need to be -1.0 - 1.0. """
 
     def __init__(self, name):
@@ -36,7 +36,7 @@ class MidiControl()
         """ Override this function if you need a different range of input values """
         return value
 
-    def receive_midi_message(self, msg):
+    def handle_midi_message(self, msg):
         """ Callback used by the main loop to pass midi messages to the controls. The internal state of
         this controller should be updated if the message pertains to this contol. """
 
@@ -44,6 +44,16 @@ class MidiControl()
         """ Return the current value of this control (after being mapped into the right input range  """
 
         return self.map(self.current_value)
+
+
+class MidiMessageBroker:
+    def __init__(self):
+        # Create midi control objects here
+        self.speed = MidiControl("speed slider")
+
+    def handle_midi_message(self, msg):
+        # Handle a message from the Midi buss and pass it to our controls
+        pass
 
 
 class Effect:

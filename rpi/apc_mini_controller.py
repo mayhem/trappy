@@ -13,6 +13,10 @@ class APCMiniMk2Controller:
         self.custom_colors = [ (0,0,0,None) for i in range(8) ]
         self.saturation = 1.0
         self.value = 1.0
+        self._exit = False
+
+    def exit(self):
+        self._exit = True
 
     def startup(self):
         self.m_out = rtmidi.MidiOut()
@@ -113,7 +117,7 @@ class APCMiniMk2Controller:
 
         dest_pad = None
         current_track = None
-        while True:
+        while not self._exit:
             m = self.m_in.get_message()
             if m is None:
                 sleep(.01)
@@ -189,14 +193,3 @@ class APCMiniMk2Controller:
                 continue
 
             print(m)
-
-apc = APCMiniMk2Controller()
-apc.startup()
-try:
-    apc.run()
-except KeyboardInterrupt:
-    print("cleanup")
-    apc.clear_pads()
-    apc.clear_tracks()
-    sleep(.1)
-    apc.shutdown()
