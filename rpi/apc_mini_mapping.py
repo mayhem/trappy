@@ -159,7 +159,13 @@ class APCMiniMk2Controller:
                         color = self.colors[pad]
                         self.update_color(dest_pad, color[3])
                         continue
-
+                # scene press
+                if m[0][1] >= 112 and m[0][1] <= 119:
+                    scene = m[0][1] - 112
+                    print(scene)
+                    continue
+            
+                print(m)
                 continue
 
             # fader change 
