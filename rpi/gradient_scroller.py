@@ -8,10 +8,10 @@ from effect import Effect
 from color import hue_to_rgb, random_color
 
 
-class EffectGradientChase(Effect):
+class EffectGradientScroller(Effect):
 
-    def __init__(self, driver):
-        super().__init__(driver)
+    def __init__(self, driver, timeout = None):
+        super().__init__(driver, timeout)
         self.hue = 0.0
 
         self.colors = [ random_color() for i in range(4) ]
@@ -57,7 +57,7 @@ class EffectGradientChase(Effect):
 
         return sorted(shifted, key=lambda a: a[0])
 
-    def run(self, timeout, variant):
+    def run(self):
 
         variant = 3
 
@@ -84,8 +84,8 @@ class EffectGradientChase(Effect):
                 break
 
         g = Gradient(palette)
-        while True:
-            if monotonic() > timeout:
+        while not self.stop:
+            if self.timeout is not None and monotonic() > self.timeout:
                 return
 
             buf = []

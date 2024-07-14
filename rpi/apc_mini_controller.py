@@ -2,13 +2,18 @@
 
 from colorsys import hsv_to_rgb
 from time import sleep
+from threading import Thread
 import json
 
 import rtmidi
+from effect import EffectEvent
 
-class APCMiniMk2Controller:
+class APCMiniMk2Controller(Thread):
 
-    def __init__(self):
+    def __init__(self, queue):
+        Thread.__init__(self)
+
+        self.queue = queue
         self.colors = []
         self.custom_colors = [ (0,0,0,None) for i in range(8) ]
         self.saturation = 1.0
@@ -62,6 +67,8 @@ class APCMiniMk2Controller:
         self.colors = colors
 
     def shutdown(self):
+        # Wait for pending operations to finish
+        sleep(.2)
         del self.m_out
         del self.m_in
 
@@ -166,7 +173,8 @@ class APCMiniMk2Controller:
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
-                    print(scene)
+                    print("add queue item")
+                    self.queue.put(EffectEvent(scene))
                     continue
             
                 print(m)
@@ -193,3 +201,7 @@ class APCMiniMk2Controller:
                 continue
 
             print(m)
+
+        self.clear_pads()
+        self.clear_tracks()
+

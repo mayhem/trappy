@@ -122,9 +122,15 @@ class RowWibble(RowGenerator):
 
 class EffectScroller(Effect):
 
+    def __init__(self, driver, timeout = None):
+        Effect.__init__(self, driver, timeout)
+
     def scroll(self, pattern, delay, buf, row_index, num_rows):
         direction = 1 if num_rows > 0 else 0;
         for j in range(abs(num_rows)):
+            if self.stop:
+                return
+
             row = pattern.get(row_index)
             self.shift(buf, row, direction)
             self.driver.set(buf)
@@ -135,6 +141,8 @@ class EffectScroller(Effect):
  
     def shift(self, buf, new_row, direction):
         for strip in range(self.driver.strips):
+            if self.stop:
+                return
             begin = strip * self.driver.leds
             end = (strip + 1) * self.driver.leds;
             if direction == 1:
@@ -146,7 +154,9 @@ class EffectScroller(Effect):
                 temp.append(new_row[strip])
                 buf[begin:end] = temp
 
-    def run(self, timeout, variant):
+    def run(self):
+
+        variant = 0
         buf = [[0,0,0] for i in range(NUM_LEDS * NUM_STRIPS)]
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 80, 255]], [1.0, [0, 0, 255]]])
 
@@ -156,7 +166,10 @@ class EffectScroller(Effect):
             pattern = PatternAll(RowWibble(palette, (0)))
 
         row_index = 0
-        while monotonic() < timeout:
+        while not self.stop:
+            if self.timeout is not None and monotonic() > self.timeout:
+                return
+
             row_index = self.scroll(pattern, .01, buf, row_index, NUM_LEDS * 2)
             row_index = self.scroll(pattern, .01, buf, row_index, -NUM_LEDS * 2)
             row_index = self.scroll(pattern, .005, buf, row_index, NUM_LEDS)

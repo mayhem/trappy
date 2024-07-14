@@ -12,7 +12,7 @@ from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 
 
-class Trappy:
+class TrappyOld:
 
     def __init__(self):
         self.strips = NUM_STRIPS
