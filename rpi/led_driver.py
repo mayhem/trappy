@@ -1,14 +1,15 @@
 from time import sleep, monotonic
 
 import smi_leds
+from gamma_led_strips import GAMMA
 
 class LEDDriver:
 
     def __init__(self, leds, strips):
-        self.strips = leds
-        self.leds = strips
+        self.strips = strips
+        self.leds = leds
 
-        smi_leds.leds_init(self.leds, 10)
+        smi_leds.leds_init(self.strips, 10)
         smi_leds.leds_clear()
 
     def clear(self):
@@ -25,8 +26,9 @@ class LEDDriver:
     def set(self, buf):
         ba = bytearray()
         for col in buf:
+            gcol = (GAMMA[col[0]], GAMMA[col[1]], GAMMA[col[2]])
             try:
-                ba += bytearray(col)
+                ba += bytearray(gcol)
             except ValueError:
                 raise ValueError(col, " is invalid")
 

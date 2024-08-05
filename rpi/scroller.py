@@ -122,8 +122,8 @@ class RowWibble(RowGenerator):
 
 class EffectScroller(Effect):
 
-    def __init__(self, driver, timeout = None):
-        Effect.__init__(self, driver, timeout)
+    def __init__(self, driver, event, apc = None, timeout = None):
+        Effect.__init__(self, driver, event, apc, timeout)
 
     def scroll(self, pattern, delay, buf, row_index, num_rows):
         direction = 1 if num_rows > 0 else 0;

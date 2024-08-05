@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from colorsys import hsv_to_rgb
+from copy import copy
 from time import sleep
 from threading import Thread
 import json
@@ -16,6 +17,7 @@ class APCMiniMk2Controller(Thread):
         self.queue = queue
         self.colors = []
         self.custom_colors = [ (0,0,0,None) for i in range(8) ]
+        self.custom_colors[0] = (255, 255, 255, 0.0)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
@@ -68,7 +70,7 @@ class APCMiniMk2Controller(Thread):
 
     def shutdown(self):
         # Wait for pending operations to finish
-        sleep(.2)
+        sleep(1)
         del self.m_out
         del self.m_in
 
@@ -174,7 +176,7 @@ class APCMiniMk2Controller(Thread):
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
                     print("add queue item")
-                    self.queue.put(EffectEvent(scene))
+                    self.queue.put(EffectEvent(scene, color_values=copy(self.custom_colors)))
                     continue
             
                 print(m)
@@ -189,13 +191,19 @@ class APCMiniMk2Controller(Thread):
                     self.saturation = m[0][2] / 127.0
                     if dest_pad is not None:
                         self.update_color(dest_pad, self.custom_colors[dest_pad][3])
-                        
                     continue
+                        
                 # Value
                 if fader == 49:
                     self.value = m[0][2] / 127.0
                     if dest_pad is not None:
                         self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+                    continue
+            
+                # Gamma correct
+                if fader == 50:
+                    value = m[0][2] / 127.0
+                    self.queue.put(EffectEvent(None, float_values=[value]))
                     continue
 
                 continue
@@ -204,4 +212,3 @@ class APCMiniMk2Controller(Thread):
 
         self.clear_pads()
         self.clear_tracks()
-

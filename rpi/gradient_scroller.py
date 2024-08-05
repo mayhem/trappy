@@ -10,11 +10,14 @@ from color import hue_to_rgb, random_color
 
 class EffectGradientScroller(Effect):
 
-    def __init__(self, driver, timeout = None):
-        super().__init__(driver, timeout)
+    def __init__(self, driver, event, apc = None, timeout=None):
+        super().__init__(driver, event, apc, timeout)
         self.hue = 0.0
 
-        self.colors = [ random_color() for i in range(4) ]
+        if event.color_values is not None and len(event.color_values) > 3:
+            self.colors = event.color_values[:4]
+        else:
+            self.colors = [ random_color() for i in range(4) ]
 
     def point_generator_hue(self, offset, row_index):
         self.hue += .01

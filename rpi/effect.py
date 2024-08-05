@@ -21,11 +21,13 @@ class EffectEvent:
 
 class Effect(Thread):
 
-    def __init__(self, driver, timeout=None):
+    def __init__(self, driver, event, apc=None, timeout=None):
         Thread.__init__(self)
         self.stop = False
         self.driver = driver
+        self.apc = apc
         self.timeout = timeout
+        self.event = event
 
         # list controls and colors required for this effect to work. In order to start an effect, each of the
         # controls must send an INIT message, so the Control object can be set.
@@ -33,6 +35,9 @@ class Effect(Thread):
 
     def exit(self):
         self.stop = True
+
+    def accept_event(self, event):
+        pass
 
     @abstractmethod
     def run(self):
