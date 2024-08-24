@@ -3,7 +3,6 @@ from random import seed, randint, random
 from color import hue_to_rgb
 from math import sin
 
-import smi_leds
 from random import randint
 from gradient import Gradient
 from scroller import EffectScroller

@@ -1,2 +1,2 @@
-smi_leds@git+https://github.com/mayhem/rpi_smi_led.git@main
+smileds==2024.8.25.3
 python-rtmidi

@@ -6,7 +6,6 @@ from colorsys import hsv_to_rgb
 from effect import Effect
 from color import random_color
 
-import smi_leds
 from defs import NUM_LEDS, NUM_STRIPS
 
 rainbow = [
