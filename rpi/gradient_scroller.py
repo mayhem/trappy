@@ -10,12 +10,10 @@ from color import hue_to_rgb, random_color
 
 class EffectGradientScroller(Effect):
 
-    MAX_COLORS = 5
-
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
         self.hue = 0.0
-        self.colors = event.color_values[:EffectGradientScroller.MAX_COLORS]
+        self.colors = event.color_values
         self.color_index = 0
 
         self.current_colors = []
