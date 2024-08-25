@@ -17,7 +17,7 @@ from effect import EffectEvent
 class Trappy:
 
     def __init__(self):
-        self.driver = LEDDriver(NUM_STRIPS, NUM_LEDS)
+        self.driver = LEDDriver(leds=NUM_LEDS, strips=NUM_STRIPS)
         for i in range(0):
             self.driver.fill((255, 0, 255))
             sleep(.1)

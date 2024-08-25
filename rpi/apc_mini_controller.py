@@ -17,7 +17,9 @@ class APCMiniMk2Controller(Thread):
         self.queue = queue
         self.colors = []
         self.custom_colors = [ (0,0,0,None) for i in range(8) ]
-        self.custom_colors[0] = (255, 255, 255, 0.0)
+        self.custom_colors[0] = (255, 0, 0, 0.0)
+        self.custom_colors[1] = (0, 255, 0, 0.0)
+#        self.custom_colors[2] = (255, 120, 0, 0.0)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
@@ -66,11 +68,15 @@ class APCMiniMk2Controller(Thread):
         self.m_out.send_message(msg)
         sleep(.01)
 
+        for i, col in enumerate(self.custom_colors):
+            self.set_pad_color(i, col)
+
         self.colors = colors
 
     def shutdown(self):
         # Wait for pending operations to finish
-        sleep(1)
+        print("stopping....")
+        sleep(.5)
         del self.m_out
         del self.m_in
 
@@ -175,8 +181,11 @@ class APCMiniMk2Controller(Thread):
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
-                    print("add queue item")
-                    self.queue.put(EffectEvent(scene, color_values=copy(self.custom_colors)))
+                    colors = []
+                    for col in self.custom_colors:
+                        if col != (0,0,0,None):
+                            colors.append(col[:3])
+                    self.queue.put(EffectEvent(scene, color_values=colors))
                     continue
             
                 print(m)

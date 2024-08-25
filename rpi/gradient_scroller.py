@@ -10,83 +10,74 @@ from color import hue_to_rgb, random_color
 
 class EffectGradientScroller(Effect):
 
+    MAX_COLORS = 5
+
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
         self.hue = 0.0
+        self.colors = event.color_values[:EffectGradientScroller.MAX_COLORS]
+        self.color_index = 0
 
-        if event.color_values is not None and len(event.color_values) > 3:
-            self.colors = event.color_values[:4]
-        else:
-            self.colors = [ random_color() for i in range(4) ]
+        self.current_colors = []
 
-    def point_generator_hue(self, offset, row_index):
-        self.hue += .01
-        if row_index % 2 == 0:
-            color = hue_to_rgb(self.hue)
-        else:
-            color = hue_to_rgb(self.hue + .5)
-        return (offset, color)
+    def _get_next_color(self):
+        new_color  = self.colors[self.color_index][:3]
+        self.color_index = (self.color_index + 1) % len(self.colors)
 
-    def point_generator_stripes(self, offset, row_index):
-        return (offset, self.colors[row_index % 2])
-
-    def point_generator_triples(self, offset, row_index):
-        return (offset, self.colors[row_index % 3])
-
-    def point_generator_rainbow(self, offset, row_index):
-        self.hue += .2
-        return (offset, hue_to_rgb(self.hue))
+        return new_color
 
     def shift(self, palette, dist):
-
-        if dist > 0:
-            direction = 1
-        else:
-            direction = 0
 
         shifted = []
         for offset, color in palette:
             new_offset = offset + dist
-            if direction == 1:
-                if new_offset < 1.5: 
-                    shifted.append((new_offset, color))
-                else:
-                    shifted.append((-.5, color))
+            if new_offset >= 1.5: 
+                shifted.insert(0, (-.5, self._get_next_color()))
             else:
-                if new_offset + dist > -.5: 
-                    shifted.append((new_offset, color))
-                else:
-                    shifted.append((1.5, color))
+                shifted.append((new_offset, color))
 
-        return sorted(shifted, key=lambda a: a[0])
+        return shifted   #sorted(shifted, key=lambda a: a[0])
+
+    def generate_palette(self, offset, spacing):
+        if offset > 0.0:
+            print("Offset must be negative!")
+            return
+
+        pal = []
+        for i, col in enumerate(self.current_colors):
+            pal.append((offset, col))  #self._get_next_color()))
+            offset += spacing
+
+        return pal
+
+    def print_palette(self, palette):
+        for pal in palette:
+            print("%.2f: " % pal[0], pal[1])
+        print()
 
     def run(self):
 
-        variant = 3
+        direction = 0 #randint(0, 1)
 
-        direction = randint(0, 1)
-
-        row_index = 0
-        offset = -.5
-        spacing = .1
+        spacing = .2
         shift_dist = .02
-        palette = []
-        while True:
-            if variant == 0:
-                palette.append(self.point_generator_rainbow(offset, row_index))
-            if variant == 1:
-                palette.append(self.point_generator_hue(offset, row_index))
-            if variant == 2:
-                palette.append(self.point_generator_stripes(offset, row_index))
-            if variant == 3:
-                palette.append(self.point_generator_triples(offset, row_index))
+        offset = -spacing
+        for i in range(int(1.0 / spacing) + 2):
+            self.current_colors.append(self.colors[self.color_index][:3])
+            self.color_index = (self.color_index + 1) % len(self.colors)
 
-            row_index += 1
-            offset += spacing
-            if palette[-1][0] > 1.5:
-                break
+        for i in range(30):
+            self.print_palette(self.generate_palette(offset, spacing))
+            print()
 
-        g = Gradient(palette)
+            offset += shift_dist
+            if offset > 0.0:
+                offset -= spacing
+
+        import sys
+#        sys.exit(-1)
+
+        g = Gradient(self.generate_palette(offset, spacing))
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -98,8 +89,14 @@ class EffectGradientScroller(Effect):
                     buf.append(col)
 
             self.driver.set(buf)
-            if direction == 0:
-                dist = shift_dist
-            else:
-                dist = -shift_dist
-            g.palette = self.shift(g.palette, dist)
+
+            offset += shift_dist
+            if offset > 0.0:
+                offset -= spacing
+                self.current_colors.insert(0, self._get_next_color())
+                del self.current_colors[-1]
+
+            g.palette = self.generate_palette(offset, spacing)
+            self.print_palette(g.palette)
+
+            sleep(.05)

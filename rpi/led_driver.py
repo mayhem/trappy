@@ -9,7 +9,7 @@ class LEDDriver:
         self.strips = strips
         self.leds = leds
 
-        smileds.leds_init(self.strips, 10)
+        smileds.leds_init(self.leds, 10)
         smileds.leds_clear()
 
     def clear(self):
