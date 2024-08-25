@@ -18,6 +18,11 @@ class EffectEvent:
     def colors(self):
         return self.color_values
 
+class SpeedEvent:
+
+    def __init__(self, speed):
+        self.speed = speed
+
 
 class Effect(Thread):
 

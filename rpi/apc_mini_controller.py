@@ -7,7 +7,7 @@ from threading import Thread
 import json
 
 import rtmidi
-from effect import EffectEvent
+from effect import EffectEvent, SpeedEvent
 
 class APCMiniMk2Controller(Thread):
 
@@ -208,12 +208,20 @@ class APCMiniMk2Controller(Thread):
                     if dest_pad is not None:
                         self.update_color(dest_pad, self.custom_colors[dest_pad][3])
                     continue
-            
-                # Gamma correct
+           
+                # speed
                 if fader == 50:
+                    # calculate 0 - 1.0
                     value = m[0][2] / 127.0
-                    self.queue.put(EffectEvent(None, float_values=[value]))
+                    value = (value * 2) - 1.0
+                    self.queue.put(SpeedEvent(value))
                     continue
+
+                # Gamma correct
+#                if fader == 50:
+#                    value = m[0][2] / 127.0
+#                    self.queue.put(EffectEvent(None, float_values=[value]))
+#                    continue
 
                 continue
 

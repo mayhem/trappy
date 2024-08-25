@@ -11,7 +11,7 @@ from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
 from gamma_correct import EffectGammaCorrect
-from effect import EffectEvent
+from effect import EffectEvent, SpeedEvent
 
 
 class Trappy:
@@ -45,25 +45,30 @@ class Trappy:
         self.queue.put(event)
 
     def run(self):
-        #self.queue_event(EffectEvent(0))
+#        self.queue_event(EffectEvent(0))
         try:
             while True:
                 event = self.queue.get()
                 if not event:
                     continue
 
-                if event.effect is None:
-                    self.current_effect.accept_event(event)
-                    continue
+                if isinstance(event, EffectEvent):
+                    if event.effect is None:
+                        self.current_effect.accept_event(event)
+                        continue
 
-                if event.effect >= 0 and event.effect < len(self.effect_classes):
+                    if event.effect >= 0 and event.effect < len(self.effect_classes):
+                        if self.current_effect is not None:
+                           self.current_effect.exit()
+                           self.current_effect.join()
+                           self.current_effect = None
+
+                        self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
+                        self.current_effect.start()
+
+                if isinstance(event, SpeedEvent):
                     if self.current_effect is not None:
-                       self.current_effect.exit()
-                       self.current_effect.join()
-                       self.current_effect = None
-
-                    self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
-                    self.current_effect.start()
+                        self.current_effect.accept_event(event)
 
         except KeyboardInterrupt:
             self.apc.exit()

@@ -4,7 +4,7 @@ from time import sleep, monotonic
 
 from gradient import Gradient
 from random import random, randint
-from effect import Effect
+from effect import Effect, SpeedEvent
 from color import hue_to_rgb, random_color
 
 
@@ -15,6 +15,7 @@ class EffectGradientScroller(Effect):
         self.hue = 0.0
         self.colors = event.color_values
         self.color_index = 0
+        self.speed = .5 
 
         self.current_colors = []
 
@@ -41,9 +42,13 @@ class EffectGradientScroller(Effect):
             print("%.2f: " % pal[0], pal[1])
         print()
 
+    def accept_event(self, event):
+        if isinstance(event, SpeedEvent):
+            self.speed = event.speed
+
     def run(self):
 
-        direction = randint(0, 1)
+        direction = self.speed > 0.0
 
         spacing = .2
         shift_dist = .02
@@ -57,15 +62,19 @@ class EffectGradientScroller(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
+            # Calculate the strip data once and save it
+            strip_data = []
+            for j in range(self.driver.leds):
+                col = g.get_color(float(j) / self.driver.leds)
+                strip_data.append(col)
+
             buf = []
             for k in range(self.driver.strips):
-                for j in range(self.driver.leds):
-                    col = g.get_color(float(j) / self.driver.leds)
-                    buf.append(col)
+                buf.extend(strip_data)
 
             self.driver.set(buf)
 
-            if direction == 1:
+            if direction:
                 offset += shift_dist
             else:
                 offset -= shift_dist
@@ -81,4 +90,8 @@ class EffectGradientScroller(Effect):
 
             g.palette = self.generate_palette(offset, spacing)
 
-            sleep(.05)
+            max_delay = .1
+            speed = abs(self.speed)
+            delay = (1.0 - speed) * max_delay
+            direction = self.speed > 0.0
+            sleep(delay)
