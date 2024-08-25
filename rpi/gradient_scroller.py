@@ -26,18 +26,6 @@ class EffectGradientScroller(Effect):
 
         return new_color
 
-    def shift(self, palette, dist):
-
-        shifted = []
-        for offset, color in palette:
-            new_offset = offset + dist
-            if new_offset >= 1.5: 
-                shifted.insert(0, (-.5, self._get_next_color()))
-            else:
-                shifted.append((new_offset, color))
-
-        return shifted   #sorted(shifted, key=lambda a: a[0])
-
     def generate_palette(self, offset, spacing):
         if offset > 0.0:
             print("Offset must be negative!")
@@ -57,7 +45,7 @@ class EffectGradientScroller(Effect):
 
     def run(self):
 
-        direction = 0 #randint(0, 1)
+        direction = randint(0, 1)
 
         spacing = .2
         shift_dist = .02
@@ -65,17 +53,6 @@ class EffectGradientScroller(Effect):
         for i in range(int(1.0 / spacing) + 2):
             self.current_colors.append(self.colors[self.color_index][:3])
             self.color_index = (self.color_index + 1) % len(self.colors)
-
-        for i in range(30):
-            self.print_palette(self.generate_palette(offset, spacing))
-            print()
-
-            offset += shift_dist
-            if offset > 0.0:
-                offset -= spacing
-
-        import sys
-#        sys.exit(-1)
 
         g = Gradient(self.generate_palette(offset, spacing))
         while not self.stop:
@@ -90,13 +67,20 @@ class EffectGradientScroller(Effect):
 
             self.driver.set(buf)
 
-            offset += shift_dist
+            if direction == 1:
+                offset += shift_dist
+            else:
+                offset -= shift_dist
             if offset > 0.0:
                 offset -= spacing
                 self.current_colors.insert(0, self._get_next_color())
                 del self.current_colors[-1]
 
+            if offset < -spacing:
+                offset += spacing
+                self.current_colors.append(self._get_next_color())
+                del self.current_colors[0]
+
             g.palette = self.generate_palette(offset, spacing)
-            self.print_palette(g.palette)
 
             sleep(.05)

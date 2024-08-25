@@ -19,7 +19,7 @@ class APCMiniMk2Controller(Thread):
         self.custom_colors = [ (0,0,0,None) for i in range(8) ]
         self.custom_colors[0] = (255, 0, 0, 0.0)
         self.custom_colors[1] = (0, 255, 0, 0.0)
-#        self.custom_colors[2] = (255, 120, 0, 0.0)
+        self.custom_colors[2] = (255, 120, 0, 0.0)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
