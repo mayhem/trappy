@@ -76,7 +76,7 @@ class Blinker(Thread):
             self.state = not self.state
 
             self.lock.release()
-            sleep(.4)
+            sleep(.3)
 
 
 class APCMiniMk2Controller(Thread):
@@ -238,12 +238,13 @@ class APCMiniMk2Controller(Thread):
                         if self.blinker.is_blinking(pad):
                             self.blinker.unblink(pad, self.custom_colors[pad])
                         else:
-                            self.blinker.blink(pad, (255,255,255))
+                            self.blinker.blink(pad, self.custom_colors[pad])
                         continue
 
                     blinking = self.blinker.get_blinking()
                     for bpad in blinking:
                         self.blinker.unblink(bpad, self.colors[pad])
+                        self.custom_colors[bpad] = self.colors[pad]
                         continue
 
                 # scene press
