@@ -3,11 +3,81 @@
 from colorsys import hsv_to_rgb
 from copy import copy
 from time import sleep, monotonic
-from threading import Thread
+from threading import Thread, Lock
 import json
 
 import rtmidi
 from effect import EffectEvent, SpeedEvent, GammaEvent
+
+class Blinker(Thread):
+
+    def __init__(self, apc):
+        Thread.__init__(self)
+        self.apc = apc
+        self.blinking = {}
+        self.state = False
+        self.lock = Lock()
+        self._exit = False
+
+    def exit(self):
+        self._exit = True
+        self.join()
+
+    def blink(self, pad, color):
+        if pad < 0 or pad > 7:
+            return
+
+        self.lock.acquire()
+        self.blinking[pad] = color
+        self.lock.release()
+        self.apc.set_pad_color(pad, color)
+
+    def unblink(self, pad, color):
+        if pad < 0 or pad > 7:
+            return
+
+        self.lock.acquire()
+        del self.blinking[pad]
+        self.lock.release()
+        self.apc.set_pad_color(pad, color)
+
+    def is_blinking(self, pad):
+        if pad < 0 or pad > 7:
+            return
+
+        self.lock.acquire()
+        isb = pad in self.blinking
+        self.lock.release()
+
+        return isb
+
+    def get_blinking(self):
+        self.lock.acquire()
+        blinking = [ k for k in self.blinking.keys() ]
+        self.lock.release()
+
+        return blinking
+
+
+    def run(self):
+        while not self._exit:
+            self.lock.acquire()
+            if len(self.blinking) == 0:
+                self.lock.release()
+                sleep(.05)
+                continue
+
+            for pad in self.blinking:
+                if self.state:
+                    self.apc.set_pad_color(pad, self.blinking[pad])
+                else:
+                    self.apc.set_pad_color(pad, (0,0,0))
+
+            self.state = not self.state
+
+            self.lock.release()
+            sleep(.4)
+
 
 class APCMiniMk2Controller(Thread):
 
@@ -16,16 +86,19 @@ class APCMiniMk2Controller(Thread):
 
         self.queue = queue
         self.colors = []
-        self.custom_colors = [ (0,0,0,None) for i in range(8) ]
-        self.custom_colors[0] = (255, 0, 0, 0.0)
-        self.custom_colors[1] = (0, 255, 0, 0.0)
-        self.custom_colors[2] = (255, 120, 0, 0.0)
+        self.custom_colors = [ (0,0,0) for i in range(8) ]
+        self.custom_colors[0] = (255, 0, 0)
+        self.custom_colors[1] = (0, 255, 0)
+        self.custom_colors[2] = (255, 120, 0)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
+        self.blinker = Blinker(self)
+        self.blinker.start()
 
     def exit(self):
         self._exit = True
+        self.blinker.exit()
 
     def startup(self):
         self.m_out = rtmidi.MidiOut()
@@ -150,23 +223,6 @@ class APCMiniMk2Controller(Thread):
                 # track press
                 if m[0][1] >= 100 and m[0][1] <= 107:
                     track = m[0][1]
-                    if current_track is None:
-                        self.blink_track(track)
-                        current_track = track
-                        dest_pad = track - 100
-                        color = self.custom_colors[dest_pad]
-                        self.update_color(dest_pad, color[3])
-                    else:
-                        self.clear_track(current_track)
-                        if track != current_track:
-                            self.blink_track(track)
-                            current_track = track
-                            dest_pad = track - 100
-                            color = self.custom_colors[dest_pad]
-                            self.update_color(dest_pad, color[3])
-                        else:
-                            current_track = None
-                            dest_pad = None
                     continue
 
                 # pad press
@@ -174,29 +230,32 @@ class APCMiniMk2Controller(Thread):
                     pad = m[0][1]
 
                     if press_duration > .5 and pad < 8:
-                        self.custom_colors[pad] = (0,0,0,None)
+                        self.custom_colors[pad] = (0,0,0)
                         self.set_pad_color(pad, (0,0,0))
                         continue
 
-                    # Do nothing if you press a custom color button
                     if pad < 8:
+                        if self.blinker.is_blinking(pad):
+                            self.blinker.unblink(pad, self.custom_colors[pad])
+                        else:
+                            self.blinker.blink(pad, (255,255,255))
                         continue
 
-                    if dest_pad is not None:
-                        color = self.colors[pad]
-                        self.update_color(dest_pad, color[3])
+                    blinking = self.blinker.get_blinking()
+                    for bpad in blinking:
+                        self.blinker.unblink(bpad, self.colors[pad])
                         continue
+
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
                     colors = []
                     for col in self.custom_colors:
-                        if col != (0,0,0,None):
-                            colors.append(col[:3])
+                        if col != (0,0,0):
+                            colors.append(col)
                     self.queue.put(EffectEvent(scene, color_values=colors))
                     continue
             
-                print(m)
                 continue
 
             # fader change 
@@ -206,15 +265,15 @@ class APCMiniMk2Controller(Thread):
                 # Saturation
                 if fader == 48:
                     self.saturation = m[0][2] / 127.0
-                    if dest_pad is not None:
-                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+#                    if dest_pad is not None:
+#                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
                     continue
                         
                 # Value
                 if fader == 49:
                     self.value = m[0][2] / 127.0
-                    if dest_pad is not None:
-                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+#                    if dest_pad is not None:
+#                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
                     continue
            
                 # speed
