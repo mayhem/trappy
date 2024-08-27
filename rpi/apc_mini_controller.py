@@ -2,7 +2,7 @@
 
 from colorsys import hsv_to_rgb
 from copy import copy
-from time import sleep
+from time import sleep, monotonic
 from threading import Thread
 import json
 
@@ -138,12 +138,15 @@ class APCMiniMk2Controller(Thread):
                 sleep(.01)
                 continue
 
-            # key up
-            if m[0][0] == 128: 
-                continue
-
             # key down
             if m[0][0] == 144: 
+                key_down_time = monotonic()
+                continue
+
+            # key up
+            if m[0][0] == 128: 
+                press_duration = monotonic() - key_down_time
+
                 # track press
                 if m[0][1] >= 100 and m[0][1] <= 107:
                     track = m[0][1]
@@ -169,6 +172,11 @@ class APCMiniMk2Controller(Thread):
                 # pad press
                 if m[0][1] >= 0 and m[0][1] <= 63:
                     pad = m[0][1]
+
+                    if press_duration > .5 and pad < 8:
+                        self.custom_colors[pad] = (0,0,0,None)
+                        self.set_pad_color(pad, (0,0,0))
+                        continue
 
                     # Do nothing if you press a custom color button
                     if pad < 8:

@@ -26,8 +26,6 @@ class GammaCorrector:
         if gamma == self.gamma:
             return
 
-        print("Calculate %.3f" % gamma)
-
         table = []
         for i in range(256):
             table.append(int(255 * (i / 256) ** (3.5-gamma)))
