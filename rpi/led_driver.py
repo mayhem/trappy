@@ -2,8 +2,11 @@ from time import sleep, monotonic
 
 import smileds
 from gamma_led_strips import GAMMA
+from gamma_correct import GammaCorrector
 
 class LEDDriver:
+
+    DEFAULT_GAMMA = 2.8
 
     def __init__(self, leds, strips):
         self.strips = strips
@@ -11,6 +14,12 @@ class LEDDriver:
 
         smileds.leds_init(self.leds, 10)
         smileds.leds_clear()
+
+        self.gamma_correct = GammaCorrector()
+        self.gamma_correct.set_gamma(self.DEFAULT_GAMMA)
+
+    def set_gamma_correction(self, gamma):
+        self.gamma_correct.set_gamma(gamma)
 
     def clear(self):
         smileds.leds_clear()
@@ -26,7 +35,7 @@ class LEDDriver:
     def set(self, buf):
         ba = bytearray()
         for col in buf:
-            gcol = (GAMMA[col[0]], GAMMA[col[1]], GAMMA[col[2]])
+            gcol = self.gamma_correct.gamma_correct(col)
             try:
                 ba += bytearray(gcol)
             except ValueError:

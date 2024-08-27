@@ -23,6 +23,10 @@ class SpeedEvent:
     def __init__(self, speed):
         self.speed = speed
 
+class GammaEvent:
+
+    def __init__(self, gamma):
+        self.gamma = gamma
 
 class Effect(Thread):
 

@@ -10,8 +10,7 @@ from gradient_scroller import EffectGradientScroller
 from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
-from gamma_correct import EffectGammaCorrect
-from effect import EffectEvent, SpeedEvent
+from effect import EffectEvent, SpeedEvent, GammaEvent
 
 
 class Trappy:
@@ -35,7 +34,6 @@ class Trappy:
         seed(monotonic())
 
         self.effect_classes = []
-#        self.effect_classes.append(EffectGammaCorrect)
         self.effect_classes.append(EffectGradientScroller)
         self.effect_classes.append(EffectScroller)
 
@@ -45,7 +43,6 @@ class Trappy:
         self.queue.put(event)
 
     def run(self):
-#        self.queue_event(EffectEvent(0))
         try:
             while True:
                 event = self.queue.get()
@@ -69,6 +66,9 @@ class Trappy:
                 if isinstance(event, SpeedEvent):
                     if self.current_effect is not None:
                         self.current_effect.accept_event(event)
+
+                if isinstance(event, GammaEvent):
+                    self.driver.set_gamma_correction(event.gamma)
 
         except KeyboardInterrupt:
             self.apc.exit()

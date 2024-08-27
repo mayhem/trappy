@@ -1,11 +1,52 @@
 from abc import abstractmethod
 from colorsys import hsv_to_rgb
-from time import sleep, monotonic
 from queue import Queue
+from time import sleep, monotonic
+from threading import Lock
 
 from gradient import Gradient
 from random import random, randint
 from effect import Effect
+
+def write_table(gamma):
+    print("# Gamma value: %.3f" % gamma)
+    print("GAMMA = [")
+    for i in range(256):
+        print("    %d," % (int(255 * (i / 256) ** (gamma))))
+    print("]")
+
+class GammaCorrector:
+
+    def __init__(self):
+        self.gamma = None
+        self.cur_table = []
+        self.lock = Lock()
+
+    def set_gamma(self, gamma):
+        if gamma == self.gamma:
+            return
+
+        print("Calculate %.3f" % gamma)
+
+        table = []
+        for i in range(256):
+            table.append(int(255 * (i / 256) ** (3.5-gamma)))
+
+        self.lock.acquire()
+        self.gamma = gamma
+        self.cur_table = table
+        self.lock.release()
+
+    def gamma_correct(self, color):
+
+        if not self.cur_table:
+            self.calculate()
+
+        self.lock.acquire()
+        col = (self.cur_table[color[0]],self.cur_table[color[1]], self.cur_table[color[2]])
+        self.lock.release()
+
+        return col
 
 
 class EffectGammaCorrect(Effect):
@@ -50,13 +91,6 @@ class EffectGammaCorrect(Effect):
 
         sleep(1000)
 
-def write_table(gamma):
-
-    print("# Gamma value: %.3f" % gamma)
-    print("GAMMA = [")
-    for i in range(256):
-        print("    %d," % (int(255 * (i / 256) ** (gamma))))
-    print("]")
 
 
 if __name__ == "__main__":

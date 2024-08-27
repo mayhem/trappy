@@ -7,7 +7,7 @@ from threading import Thread
 import json
 
 import rtmidi
-from effect import EffectEvent, SpeedEvent
+from effect import EffectEvent, SpeedEvent, GammaEvent
 
 class APCMiniMk2Controller(Thread):
 
@@ -218,9 +218,11 @@ class APCMiniMk2Controller(Thread):
                     continue
 
                 # Gamma correct
-#                if fader == 50:
+#                if fader == 51:
+#                    # scale to 1.5 - 3.0
 #                    value = m[0][2] / 127.0
-#                    self.queue.put(EffectEvent(None, float_values=[value]))
+#                    value = (value * 1.5) + 1.5
+#                    self.queue.put(GammaEvent(value))
 #                    continue
 
                 continue
