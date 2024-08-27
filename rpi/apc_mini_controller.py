@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from colorsys import hsv_to_rgb
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from copy import copy
 from time import sleep, monotonic
 from threading import Thread, Lock
@@ -31,6 +31,24 @@ class Blinker(Thread):
         self.blinking[pad] = color
         self.lock.release()
         self.apc.set_pad_color(pad, color)
+
+    def update_blink_color(self, pad, color):
+        if pad < 0 or pad > 7:
+            return
+
+        self.lock.acquire()
+        self.blinking[pad] = color
+        self.lock.release()
+
+    def get_blink_color(self, pad):
+        if pad < 0 or pad > 7:
+            return
+
+        self.lock.acquire()
+        color = self.blinking[pad]
+        self.lock.release()
+
+        return color
 
     def unblink(self, pad, color):
         if pad < 0 or pad > 7:
@@ -193,17 +211,14 @@ class APCMiniMk2Controller(Thread):
         self.m_out.send_message([0x90, track, 0])
         sleep(.005)
 
-    def update_color(self, pad, hue):
-        if hue is None:
-            return
+    def update_color(self, pad, color):
+        hue, _, _ = rgb_to_hsv(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
         r,g,b = hsv_to_rgb(hue, self.saturation, self.value)
-        new_color = (int(r * 255),int(g * 255),int(b * 255),hue)
-        self.set_pad_color(pad, new_color)
-        self.custom_colors[pad] = new_color
+        new_color = (int(r * 255),int(g * 255),int(b * 255))
+        self.blinker.update_blink_color(pad, new_color)
 
     def run(self):
 
-        dest_pad = None
         current_track = None
         while not self._exit:
             m = self.m_in.get_message()
@@ -236,7 +251,9 @@ class APCMiniMk2Controller(Thread):
 
                     if pad < 8:
                         if self.blinker.is_blinking(pad):
-                            self.blinker.unblink(pad, self.custom_colors[pad])
+                            color = self.blinker.get_blink_color(pad)
+                            self.blinker.unblink(pad, color)
+                            self.custom_colors[pad] = color
                         else:
                             self.blinker.blink(pad, self.custom_colors[pad])
                         continue
@@ -266,15 +283,17 @@ class APCMiniMk2Controller(Thread):
                 # Saturation
                 if fader == 48:
                     self.saturation = m[0][2] / 127.0
-#                    if dest_pad is not None:
-#                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+                    blinking = self.blinker.get_blinking()
+                    for bpad in blinking:
+                        self.update_color(bpad, self.custom_colors[bpad])
                     continue
                         
                 # Value
                 if fader == 49:
                     self.value = m[0][2] / 127.0
-#                    if dest_pad is not None:
-#                        self.update_color(dest_pad, self.custom_colors[dest_pad][3])
+                    blinking = self.blinker.get_blinking()
+                    for bpad in blinking:
+                        self.update_color(bpad, self.custom_colors[bpad])
                     continue
            
                 # speed
