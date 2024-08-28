@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import json
 
 import rtmidi
-from effect import EffectEvent, SpeedEvent, GammaEvent
+from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent
 
 class Blinker(Thread):
 
@@ -106,13 +106,14 @@ class APCMiniMk2Controller(Thread):
         self.colors = []
         self.custom_colors = [ (0,0,0) for i in range(8) ]
         self.custom_colors[0] = (255, 0, 0)
-        self.custom_colors[1] = (0, 255, 0)
+        self.custom_colors[1] = (255, 0, 255)
         self.custom_colors[2] = (255, 120, 0)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
         self.blinker = Blinker(self)
         self.blinker.start()
+        self.fader_values = [ 0.0 for i in range(9) ]
 
     def exit(self):
         self._exit = True
@@ -121,6 +122,7 @@ class APCMiniMk2Controller(Thread):
     def startup(self):
         self.m_out = rtmidi.MidiOut()
         self.m_in = rtmidi.MidiIn()
+
         available_ports = self.m_out.get_ports()
         if available_ports:
             self.m_out.open_port(1)
@@ -164,12 +166,26 @@ class APCMiniMk2Controller(Thread):
 
         self.colors = colors
 
+
     def shutdown(self):
         # Wait for pending operations to finish
         print("stopping....")
         sleep(.5)
         del self.m_out
         del self.m_in
+
+    def send_intro_msg(self):
+        # The data returned can be corrupted, moving on
+        self.m_in.ignore_types(sysex=False)
+
+        msg = [ 0xF0, 0x47, 0x7F, 0x4F, 0x60, 0x00, 0x04, 0x00, 0x01, 0x01, 0x00, 0xF7]
+        self.m_out.send_message(msg)
+        if m[0][0] == 240:
+            print(m[0])
+            if m[0][:5] == [240, 71, 127, 79, 97]:
+                print("Got intro message!")
+                for i in range(9):
+                    print("fader %d: %d" % (i, m[0][i + 7]))
 
     def set_pad_color(self, pad, color):
         num_bytes = 8
@@ -218,6 +234,7 @@ class APCMiniMk2Controller(Thread):
         self.blinker.update_blink_color(pad, new_color)
 
     def run(self):
+
 
         current_track = None
         while not self._exit:
@@ -274,7 +291,7 @@ class APCMiniMk2Controller(Thread):
                     for col in self.custom_colors:
                         if col != (0,0,0):
                             colors.append(col)
-                    self.queue.put(EffectEvent(scene, color_values=colors))
+                    self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
                     continue
             
                 continue
@@ -282,6 +299,11 @@ class APCMiniMk2Controller(Thread):
             # fader change 
             if m[0][0] == 176: 
                 fader = m[0][1]
+
+                # save non-mapped fader values
+                value = m[0][2] / 127.0
+                self.fader_values[fader - 48] = value
+                print(self.fader_values)
 
                 # Saturation
                 if fader == 48:
@@ -301,21 +323,18 @@ class APCMiniMk2Controller(Thread):
            
                 # speed
                 if fader == 50:
-                    # calculate 0 - 1.0
                     value = m[0][2] / 127.0
-                    value = (value * 2) - 1.0
                     self.queue.put(SpeedEvent(value))
                     continue
 
-                # Gamma correct
-#                if fader == 51:
-#                    # scale to 1.5 - 3.0
-#                    value = m[0][2] / 127.0
-#                    value = (value * 1.5) + 1.5
-#                    self.queue.put(GammaEvent(value))
-#                    continue
+                # General fader, passed to effect
+                if fader >= 51 and fader <= 56:
+                    # calculate 0 - 1.0
+                    self.queue.put(FaderEvent(fader - 48, value))
+                    continue
 
                 continue
+
 
             print(m)
 

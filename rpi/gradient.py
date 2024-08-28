@@ -27,6 +27,12 @@ class Gradient(object):
     def set_offset(self, offset):
         self.led_offset = offset
 
+    def print_palette(self):
+        print("Gradient palette:")
+        for pal in self.palette:
+            print("%.3f: %d, %d, %d" % (pal[0], pal[1][0], pal[1][1], pal[1][2]))
+        print()
+
     def get_color(self, offset):
 
         if offset < 0.0 or offset > 1.0:
@@ -51,4 +57,5 @@ class Gradient(object):
 
                 return (max(min(new_color[0], 255), 0), max(min(new_color[1], 255), 0), max(min(new_color[2], 255), 0))
 
+        self.print_palette()
         assert False
