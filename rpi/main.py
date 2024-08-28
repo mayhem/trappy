@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from threading import Thread
+from threading import Thread, Lock
 from queue import Queue
 from random import seed
 from time import sleep, monotonic
@@ -11,6 +11,34 @@ from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
 from effect import EffectEvent, SpeedEvent, GammaEvent
+
+class EventQueue:
+    """ Similar to the Lock object, but previous duplicate events are dropped. """
+
+    def __init__(self):
+        self.queue = []
+        self.lock = Lock()
+
+    def put(self, item):
+        self.lock.acquire()
+        try:
+            if type(self.queue[0]) == type(item):
+                self.queue.pop(0)
+        except IndexError:
+            pass
+
+        self.queue.append(item)
+        self.lock.release()
+
+    def get(self):
+        self.lock.acquire()
+        try:
+            item = self.queue.pop(0)
+        except IndexError:
+            item = None
+        self.lock.release()
+
+        return item
 
 
 class Trappy:
@@ -25,7 +53,7 @@ class Trappy:
 
         self.driver.clear()
 
-        self.queue = Queue()
+        self.queue = EventQueue()
         self.apc = APCMiniMk2Controller(self.queue)
         self.apc.startup()
         self.apc.start()
@@ -39,7 +67,7 @@ class Trappy:
 
         self.current_effect = None
 
-    def queue_event(self, event):
+    def queue_event(self, event, avoid_duplicates=False):
         self.queue.put(event)
 
     def run(self):

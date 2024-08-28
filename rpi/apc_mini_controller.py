@@ -89,7 +89,7 @@ class Blinker(Thread):
                 if self.state:
                     self.apc.set_pad_color(pad, self.blinking[pad])
                 else:
-                    self.apc.set_pad_color(pad, (0,0,0))
+                    self.apc.set_pad_color(pad, (128,128,128))
 
             self.state = not self.state
 
@@ -243,12 +243,14 @@ class APCMiniMk2Controller(Thread):
                 # pad press
                 if m[0][1] >= 0 and m[0][1] <= 63:
                     pad = m[0][1]
-
+    
+                    # Check to see if this is a long press
                     if press_duration > .5 and pad < 8:
                         self.custom_colors[pad] = (0,0,0)
                         self.set_pad_color(pad, (0,0,0))
                         continue
 
+                    # did we press a custom color button?
                     if pad < 8:
                         if self.blinker.is_blinking(pad):
                             color = self.blinker.get_blink_color(pad)
@@ -258,6 +260,7 @@ class APCMiniMk2Controller(Thread):
                             self.blinker.blink(pad, self.custom_colors[pad])
                         continue
 
+                    # If it is a regular button and we have blinking buttons, assign it/them
                     blinking = self.blinker.get_blinking()
                     for bpad in blinking:
                         self.blinker.unblink(bpad, self.colors[pad])
