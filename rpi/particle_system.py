@@ -24,7 +24,7 @@ class EffectParticleSystem(Effect):
 
     FADER_SPEED = 2
     FADER_COUNT = 3
-    MAX_PARTICLE_COUNT = 16
+    MAX_PARTICLE_COUNT = 64
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -46,7 +46,7 @@ class EffectParticleSystem(Effect):
         self.lock.acquire()
         count = self._particle_count
         self.lock.release()
-        return count
+        return int(count)
 
     def _map_count_value(self, value):
         # scale to MAX_PARTICLE_COUNT
@@ -112,7 +112,7 @@ class EffectParticleSystem(Effect):
                 sleep(.01)
                 continue
 
-            max_count = int(self.particle_count)
+            max_count = self.particle_count
             for i in range(max_count - len(self.particles)):
                 velocity = 1 + randint(2, 6)
                 self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, 0))
