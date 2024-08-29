@@ -20,19 +20,15 @@ class EffectGradientScroller(Effect):
         super().__init__(driver, event, apc, timeout)
         self.lock = Lock()
         self.hue = 0.0
-        self.colors = event.color_values
-        self.color_index = 0
-        self.speed = event.fader_values[self.FADER_SPEED]
-        self.spacing = self._map_spacing_value(event.fader_values[self.FADER_SPACING])
-        self.direction = DirectionEvent.OUTWARD
-
+        self._spacing = self._map_spacing_value(event.fader_values[self.FADER_SPACING])
         self.current_colors = []
 
-    def _get_next_color(self):
-        new_color  = self.colors[self.color_index][:3]
-        self.color_index = (self.color_index + 1) % len(self.colors)
-
-        return new_color
+    @property
+    def spacing(self):
+        self.lock.acquire()
+        spacing = self._spacing    
+        self.lock.release()
+        return spacing    
 
     def _map_spacing_value(self, value):
         # scale to SPACING_RANGE_MIN and SPACING_RANGE_MAX
@@ -45,7 +41,7 @@ class EffectGradientScroller(Effect):
 
         pal = []
         for i, col in enumerate(self.current_colors):
-            pal.append((offset, col))  #self._get_next_color()))
+            pal.append((offset, col))
             offset += spacing
 
         return pal
@@ -56,23 +52,13 @@ class EffectGradientScroller(Effect):
         print()
 
     def accept_event(self, event):
-        if isinstance(event, SpeedEvent):
-            self.lock.acquire()
-            self.speed = event.speed
-            self.lock.release()
-            return
+        super().accept_event(event)
 
         if isinstance(event, FaderEvent):
             if event.fader == self.FADER_SPACING:
                 self.lock.acquire()
-                self.spacing = self._map_spacing_value(event.value)
+                self._spacing = self._map_spacing_value(event.value)
                 self.lock.release()
-            return
-
-        if isinstance(event, DirectionEvent):
-            self.lock.acquire()
-            self.direction = event.direction
-            self.lock.release()
             return
 
     def run(self):
@@ -88,9 +74,7 @@ class EffectGradientScroller(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            self.lock.acquire()
             speed = self.speed
-            self.lock.release()
             if speed == 0:
                 sleep(.01)
                 continue
@@ -113,12 +97,12 @@ class EffectGradientScroller(Effect):
                 offset -= shift_dist
             if offset > 0.0:
                 offset -= self.spacing
-                self.current_colors.insert(0, self._get_next_color())
+                self.current_colors.insert(0, self.get_next_color())
                 del self.current_colors[-1]
 
             if offset < -self.spacing:
                 offset += self.spacing
-                self.current_colors.append(self._get_next_color())
+                self.current_colors.append(self.get_next_color())
                 del self.current_colors[0]
 
             g.palette = self.generate_palette(offset, self.spacing)

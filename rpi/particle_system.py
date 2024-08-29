@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from colorsys import hsv_to_rgb
 from time import sleep, monotonic
-from threading import Lock
 
 from gradient import Gradient
 from random import random, randint
@@ -28,19 +27,8 @@ class EffectParticleSystem(Effect):
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.lock = Lock()
-        self.colors = event.color_values
-        self.color_index = 0
-        self.speed = event.fader_values[self.FADER_SPEED]
         self._particle_count = self._map_count_value(event.fader_values[self.FADER_COUNT])
-        self.direction = DirectionEvent.OUTWARD
         self.particles = []
-
-    def _get_next_color(self):
-        new_color  = self.colors[self.color_index][:3]
-        self.color_index = (self.color_index + 1) % len(self.colors)
-
-        return new_color
 
     @property
     def particle_count(self):
@@ -59,24 +47,13 @@ class EffectParticleSystem(Effect):
         print()
 
     def accept_event(self, event):
-        if isinstance(event, SpeedEvent):
-            self.lock.acquire()
-            self.speed = event.speed
-            self.lock.release()
-            return
-
+        super().accept_event(event)
         if isinstance(event, FaderEvent):
             if event.fader == self.FADER_COUNT:
                 self.lock.acquire()
                 self._particle_count = self._map_count_value(event.value)
                 self.lock.release()
                 print("particle count: %d" % self.particle_count)
-            return
-
-        if isinstance(event, DirectionEvent):
-            self.lock.acquire()
-            self.direction = event.direction
-            self.lock.release()
             return
 
     def render_leds(self, t, background_color=(0,0,0)):
@@ -97,7 +74,7 @@ class EffectParticleSystem(Effect):
                 if pos >= self.driver.leds:
                     is_alive = False
                 else:
-                    led_data[(s * self.driver.leds) + pos] = self._get_next_color()
+                    led_data[(s * self.driver.leds) + pos] = self.get_next_color()
 
             if is_alive:
                 still_alive.append(p)
@@ -113,9 +90,7 @@ class EffectParticleSystem(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            self.lock.acquire()
             speed = self.speed
-            self.lock.release()
             if speed == 0:
                 sleep(.01)
                 continue
