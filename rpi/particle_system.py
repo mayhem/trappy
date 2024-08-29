@@ -5,7 +5,7 @@ from threading import Lock
 
 from gradient import Gradient
 from random import random, randint
-from effect import Effect, SpeedEvent, FaderEvent
+from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 
 class Particle:
@@ -24,7 +24,7 @@ class EffectParticleSystem(Effect):
 
     FADER_SPEED = 2
     FADER_COUNT = 3
-    MAX_PARTICLE_COUNT = 64
+    MAX_PARTICLE_COUNT = 4
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -33,6 +33,7 @@ class EffectParticleSystem(Effect):
         self.color_index = 0
         self.speed = event.fader_values[self.FADER_SPEED]
         self._particle_count = self._map_count_value(event.fader_values[self.FADER_COUNT])
+        self.direction = DirectionEvent.OUTWARD
         self.particles = []
 
     def _get_next_color(self):
@@ -50,7 +51,7 @@ class EffectParticleSystem(Effect):
 
     def _map_count_value(self, value):
         # scale to MAX_PARTICLE_COUNT
-        return 1 + (value * (self.MAX_PARTICLE_COUNT-1))
+        return value * self.MAX_PARTICLE_COUNT
 
     def print_palette(self, palette):
         for pal in palette:
@@ -69,6 +70,13 @@ class EffectParticleSystem(Effect):
                 self.lock.acquire()
                 self._particle_count = self._map_count_value(event.value)
                 self.lock.release()
+                print("particle count: %d" % self.particle_count)
+            return
+
+        if isinstance(event, DirectionEvent):
+            self.lock.acquire()
+            self.direction = event.direction
+            self.lock.release()
             return
 
     def render_leds(self, t, background_color=(0,0,0)):
@@ -113,12 +121,12 @@ class EffectParticleSystem(Effect):
                 continue
 
             max_count = self.particle_count
-            for i in range(max_count - len(self.particles)):
+            for i in range(max_count):
                 velocity = 1 + randint(2, 6)
                 self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, 0))
 
             self.driver.set(self.render_leds(t))
-            t += 1
+            t += self.direction 
 
             max_delay = .1
             delay = (1.0 - speed) * max_delay

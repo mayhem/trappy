@@ -5,7 +5,7 @@ from threading import Lock
 
 from gradient import Gradient
 from random import random, randint
-from effect import Effect, SpeedEvent, FaderEvent
+from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 
 
@@ -24,6 +24,7 @@ class EffectGradientScroller(Effect):
         self.color_index = 0
         self.speed = event.fader_values[self.FADER_SPEED]
         self.spacing = self._map_spacing_value(event.fader_values[self.FADER_SPACING])
+        self.direction = DirectionEvent.OUTWARD
 
         self.current_colors = []
 
@@ -68,9 +69,13 @@ class EffectGradientScroller(Effect):
                 self.lock.release()
             return
 
-    def run(self):
+        if isinstance(event, DirectionEvent):
+            self.lock.acquire()
+            self.direction = event.direction
+            self.lock.release()
+            return
 
-        direction = True
+    def run(self):
 
         shift_dist = .02
         offset = -self.spacing
@@ -102,7 +107,7 @@ class EffectGradientScroller(Effect):
 
             self.driver.set(buf)
 
-            if direction:
+            if self.direction == DirectionEvent.OUTWARD:
                 offset += shift_dist
             else:
                 offset -= shift_dist

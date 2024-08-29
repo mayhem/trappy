@@ -23,6 +23,12 @@ class SpeedEvent:
     def __init__(self, speed):
         self.speed = speed
 
+class DirectionEvent:
+    INWARD = -1
+    OUTWARD = 1
+    def __init__(self, direction):
+        self.direction = direction
+
 class GammaEvent:
     def __init__(self, gamma):
         self.gamma = gamma

@@ -11,7 +11,7 @@ from particle_system import EffectParticleSystem
 from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
-from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent
+from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent
 
 class EventQueue:
     """ Similar to the Lock object, but previous duplicate events are dropped. """
@@ -93,7 +93,7 @@ class Trappy:
                         self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
                         self.current_effect.start()
 
-                if isinstance(event, SpeedEvent) or isinstance(event, FaderEvent):
+                if isinstance(event, SpeedEvent) or isinstance(event, FaderEvent) or isinstance(event, DirectionEvent):
                     if self.current_effect is not None:
                         self.current_effect.accept_event(event)
 
