@@ -7,6 +7,7 @@ from time import sleep, monotonic
 
 from scroller import EffectScroller
 from gradient_scroller import EffectGradientScroller
+from particle_system import EffectParticleSystem
 from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
@@ -63,6 +64,7 @@ class Trappy:
 
         self.effect_classes = []
         self.effect_classes.append(EffectGradientScroller)
+        self.effect_classes.append(EffectParticleSystem)
         self.effect_classes.append(EffectScroller)
 
         self.current_effect = None

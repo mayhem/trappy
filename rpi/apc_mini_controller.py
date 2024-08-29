@@ -113,7 +113,7 @@ class APCMiniMk2Controller(Thread):
         self._exit = False
         self.blinker = Blinker(self)
         self.blinker.start()
-        self.fader_values = [ 0.0 for i in range(9) ]
+        self.fader_values = [ 0.0, 0.0, 1.0, .5, .5, .5, .5, .5, .5 ]
 
     def exit(self):
         self._exit = True
@@ -303,7 +303,6 @@ class APCMiniMk2Controller(Thread):
                 # save non-mapped fader values
                 value = m[0][2] / 127.0
                 self.fader_values[fader - 48] = value
-                print(self.fader_values)
 
                 # Saturation
                 if fader == 48:

@@ -59,7 +59,6 @@ class EffectGradientScroller(Effect):
             self.lock.acquire()
             self.speed = event.speed
             self.lock.release()
-            print("speed updated")
             return
 
         if isinstance(event, FaderEvent):
