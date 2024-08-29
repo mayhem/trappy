@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from time import sleep
 from threading import Thread, Lock
+from queue import Queue
 
 from event import *
 
@@ -23,6 +24,8 @@ class Effect(Thread):
         self._speed = event.fader_values[self.FADER_SPEED]
         self._direction = DirectionEvent.OUTWARD
 
+        self.instant_color_queue = Queue()
+
     def exit(self):
         self.stop = True
 
@@ -39,7 +42,16 @@ class Effect(Thread):
             self.lock.release()
             return
 
+        if isinstance(event, InstantColorEvent):
+            self.lock.acquire()
+            self.instant_color_queue.put(event.color)
+            self.lock.release()
+            return
+
     def get_next_color(self):
+        if self.instant_color_queue.qsize() > 0:
+            self.colors[self.color_index] = self.instant_color_queue.get()
+
         new_color  = self.colors[self.color_index][:3]
         self.color_index = (self.color_index + 1) % len(self.colors)
         return new_color

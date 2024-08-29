@@ -53,7 +53,6 @@ class EffectParticleSystem(Effect):
                 self.lock.acquire()
                 self._particle_count = self._map_count_value(event.value)
                 self.lock.release()
-                print("particle count: %d" % self.particle_count)
             return
 
     def render_leds(self, t, background_color=(0,0,0)):

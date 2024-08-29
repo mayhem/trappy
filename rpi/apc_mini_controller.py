@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import json
 
 import rtmidi
-from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent
+from effect import *
 from blinker import Blinker
 
 
@@ -200,10 +200,13 @@ class APCMiniMk2Controller(Thread):
 
                     # If it is a regular button and we have blinking buttons, assign it/them
                     blinking = self.blinker.get_blinking()
-                    for bpad in blinking:
-                        self.blinker.unblink(bpad, self.colors[pad])
-                        self.custom_colors[bpad] = self.colors[pad]
-                        continue
+                    if blinking:
+                        for bpad in blinking:
+                            self.blinker.unblink(bpad, self.colors[pad])
+                            self.custom_colors[bpad] = self.colors[pad]
+                            continue
+                    else:
+                        self.queue.put(InstantColorEvent(self.colors[pad][:3]))
 
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:

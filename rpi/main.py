@@ -93,12 +93,15 @@ class Trappy:
                         self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
                         self.current_effect.start()
 
-                if isinstance(event, SpeedEvent) or isinstance(event, FaderEvent) or isinstance(event, DirectionEvent):
-                    if self.current_effect is not None:
-                        self.current_effect.accept_event(event)
+                    continue
 
                 if isinstance(event, GammaEvent):
                     self.driver.set_gamma_correction(event.gamma)
+                    continue
+
+                # Pass all other events to the current effect
+                if self.current_effect is not None:
+                    self.current_effect.accept_event(event)
 
         except KeyboardInterrupt:
             self.apc.exit()

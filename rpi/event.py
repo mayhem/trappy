@@ -33,3 +33,7 @@ class FaderEvent:
     def __init__(self, fader, value):
         self.fader = fader
         self.value = value
+
+class InstantColorEvent:
+    def __init__(self, color):
+        self.color = color
