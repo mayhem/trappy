@@ -32,10 +32,13 @@ class LEDDriver:
         smileds.leds_set(leds)
         smileds.leds_send()
 
-    def set(self, buf):
+    def set(self, buf, no_gamma=False):
         ba = bytearray()
         for col in buf:
-            gcol = self.gamma_correct.gamma_correct(col)
+            if no_gamma:
+                gcol = col
+            else:
+                gcol = self.gamma_correct.gamma_correct(col)
             try:
                 ba += bytearray(gcol)
             except ValueError:
