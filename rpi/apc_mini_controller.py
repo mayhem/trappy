@@ -203,7 +203,7 @@ class APCMiniMk2Controller(Thread):
                     if blinking:
                         for bpad in blinking:
                             self.blinker.unblink(bpad, self.colors[pad])
-                            self.custom_colors[bpad] = self.colors[pad]
+                            self.custom_colors[bpad] = self.colors[pad][:3]
                             continue
                     else:
                         self.queue.put(InstantColorEvent(self.colors[pad][:3]))

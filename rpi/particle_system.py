@@ -68,12 +68,13 @@ class EffectParticleSystem(Effect):
                 strips = list(range(self.driver.strips))
 
             is_alive = True
+            next_color = self.get_next_color()
             for s in strips:
                 pos = p.velocity * (t - p.t) + p.position
                 if pos >= self.driver.leds:
                     is_alive = False
                 else:
-                    led_data[(s * self.driver.leds) + pos] = self.get_next_color()
+                    led_data[(s * self.driver.leds) + pos] = next_color
 
             if is_alive:
                 still_alive.append(p)
