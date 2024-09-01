@@ -51,7 +51,6 @@ class Effect(Thread):
     def get_next_color(self):
         if self.instant_color_queue.qsize() > 0:
             self.colors[self.color_index] = self.instant_color_queue.get()
-            print("get next", self.colors[self.color_index])
 
         new_color  = self.colors[self.color_index][:3]
         self.color_index = (self.color_index + 1) % len(self.colors)

@@ -29,6 +29,7 @@ class APCMiniMk2Controller(Thread):
         self.blinker.start()
         self.fader_values = [ 0.0, 0.0, 1.0, .5, .5, .5, .5, .5, .5 ]
         self.direction = DirectionEvent.OUTWARD
+        self.key_down_time = None
 
     def exit(self):
         self._exit = True
@@ -165,7 +166,10 @@ class APCMiniMk2Controller(Thread):
 
             # key up
             if m[0][0] == 128: 
-                press_duration = monotonic() - key_down_time
+                if key_down_time is not None:
+                    press_duration = monotonic() - key_down_time
+                else:
+                    press_duration = 0.0
 
                 # track press
                 if m[0][1] >= 100 and m[0][1] <= 107:
