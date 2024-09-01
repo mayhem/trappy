@@ -3,7 +3,7 @@ from colorsys import hsv_to_rgb
 from time import sleep, monotonic
 
 from gradient import Gradient
-from random import random, randint
+from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 
@@ -23,7 +23,7 @@ class EffectParticleSystem(Effect):
 
     FADER_SPEED = 2
     FADER_COUNT = 3
-    MAX_PARTICLE_COUNT = 4
+    MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -39,7 +39,7 @@ class EffectParticleSystem(Effect):
 
     def _map_count_value(self, value):
         # scale to MAX_PARTICLE_COUNT
-        return value * self.MAX_PARTICLE_COUNT
+        return value * (self.MAX_PARTICLE_COUNT-1) + 1
 
     def print_palette(self, palette):
         for pal in palette:
@@ -96,9 +96,15 @@ class EffectParticleSystem(Effect):
                 continue
 
             max_count = self.particle_count
-            for i in range(max_count):
+            if max_count == self.driver.strips:
                 velocity = 1 + randint(2, 6)
                 self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, 0))
+            else:
+                strips = [ x for x in range(self.driver.strips)]
+                shuffle(strips)
+                for s in strips[:max_count]:
+                    velocity = 1 + randint(2, 6)
+                    self.particles.append(Particle(t, s, 0, velocity, 0))
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
