@@ -5,10 +5,14 @@ from copy import copy
 from time import sleep, monotonic
 from threading import Thread, Lock
 import json
+import sys
 
 import rtmidi
 from effect import *
 from blinker import Blinker
+
+def callback(error_type, msg, data):
+    data.callback(error_type, msg, data)
 
 
 class APCMiniMk2Controller(Thread):
@@ -35,14 +39,30 @@ class APCMiniMk2Controller(Thread):
         self._exit = True
         self.blinker.exit()
 
+    def callback(self, error_type, msg):
+        # Never seems to get called, even when device disconnects!
+        print("Error: ", error_type, msg)
+
     def startup(self):
         self.m_out = rtmidi.MidiOut()
         self.m_in = rtmidi.MidiIn()
 
-        available_ports = self.m_out.get_ports()
-        if available_ports:
-            self.m_out.open_port(1)
-            self.m_in.open_port(1)
+        self.m_out.set_error_callback(callback, self)
+
+        print("Wait for APC mini...", end="")
+        sys.stdout.flush()
+        connected = False
+        while not connected:
+            available_ports = self.m_out.get_ports()
+            for index, port in enumerate(available_ports):
+                if port.startswith("APC mini mk2"):
+                    self.m_out.open_port(index)
+                    self.m_in.open_port(index)
+                    connected = True
+                    print(" connected.")
+                    break
+            else:
+                sleep(.1)
 
         self.clear_pads()
         self.clear_tracks()
