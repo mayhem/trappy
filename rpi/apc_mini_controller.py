@@ -10,9 +10,31 @@ import sys
 import rtmidi
 from effect import *
 from blinker import Blinker
+import usb.core
 
-def callback(error_type, msg, data):
-    data.callback(error_type, msg, data)
+
+class APCMiniMk2ControllerWatchdog(Thread):
+
+    def __init__(self, controller):
+        Thread.__init__(self)
+        self.controller = controller
+        self._exit = False
+
+    def exit(self):
+        self._exit = True
+        self.join()
+
+    def run(self):
+        while not self._exit:
+            sleep(.1)
+            dev = usb.core.find(idVendor=0x09e8, idProduct=0x004f)
+            if dev:
+                if not self.controller.is_connected:
+                    self.controller.is_connected = True
+                continue
+
+            if self.controller.is_connected:
+                self.controller.is_connected = False
 
 
 class APCMiniMk2Controller(Thread):
@@ -20,7 +42,9 @@ class APCMiniMk2Controller(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
 
+        self._is_connected = False
         self.queue = queue
+        self.lock = Lock()
         self.colors = []
         self.custom_colors = [ (0,0,0) for i in range(8) ]
         self.custom_colors[0] = (255, 0, 0)
@@ -35,34 +59,43 @@ class APCMiniMk2Controller(Thread):
         self.direction = DirectionEvent.OUTWARD
         self.key_down_time = None
 
+        self.watchdog = APCMiniMk2ControllerWatchdog(self)
+        self.watchdog.start()
+
+    @property
+    def is_connected(self):
+        self.lock.acquire()
+        ret = self._is_connected
+        self.lock.release()
+        return ret
+
+    @is_connected.setter
+    def is_connected(self, connected):
+        self.lock.acquire()
+        self._is_connected = connected
+        self.lock.release()
+
     def exit(self):
         self._exit = True
+        self.watchdog.exit()
         self.blinker.exit()
-
-    def callback(self, error_type, msg):
-        # Never seems to get called, even when device disconnects!
-        print("Error: ", error_type, msg)
 
     def startup(self):
         self.m_out = rtmidi.MidiOut()
         self.m_in = rtmidi.MidiIn()
 
-        self.m_out.set_error_callback(callback, self)
-
-        print("Wait for APC mini...", end="")
+        print("APC: Wait for APC mini...", end="")
         sys.stdout.flush()
-        connected = False
-        while not connected:
-            available_ports = self.m_out.get_ports()
-            for index, port in enumerate(available_ports):
-                if port.startswith("APC mini mk2"):
-                    self.m_out.open_port(index)
-                    self.m_in.open_port(index)
-                    connected = True
-                    print(" connected.")
-                    break
-            else:
-                sleep(.1)
+        while not self.is_connected:
+            sleep(.1)
+
+        print("APC connected, run startup")
+        available_ports = self.m_out.get_ports()
+        for index, port in enumerate(available_ports):
+            if port.startswith("APC mini mk2"):
+                self.m_out.open_port(index)
+                self.m_in.open_port(index)
+                break
 
         self.clear_pads()
         self.clear_tracks()

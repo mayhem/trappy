@@ -76,7 +76,13 @@ class Trappy:
 
     def run(self):
         try:
-            while True:
+            print("main: wait for APC...")
+            while not self.apc.is_connected:
+                sleep(.1)
+
+            print("main: starting")
+
+            while self.apc.is_connected:
                 event = self.queue.get()
                 if not event:
                     continue
@@ -105,12 +111,19 @@ class Trappy:
                 if self.current_effect is not None:
                     self.current_effect.accept_event(event)
 
+            print("main: APC exit")
+
         except KeyboardInterrupt:
             self.apc.exit()
-            self.driver.clear()
             self.apc.shutdown()
 
+        if self.current_effect is not None:
+            self.current_effect.exit()
+            self.current_effect = None
+
+        self.driver.clear()
 
 if __name__ == "__main__":
-    t = Trappy()
-    t.run()
+    while True:
+        t = Trappy()
+        t.run()

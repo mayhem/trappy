@@ -28,6 +28,7 @@ class Effect(Thread):
 
     def exit(self):
         self.stop = True
+        self.join()
 
     def accept_event(self, event):
         if isinstance(event, SpeedEvent):
