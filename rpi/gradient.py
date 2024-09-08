@@ -30,7 +30,7 @@ class Gradient(object):
     def set_offset(self, offset):
         self.led_offset = offset
 
-    def print_palette(self, palette):
+    def print_palette(self, palette=None):
         print("Gradient palette:")
         for pal in palette or self.palette:
             print("%.3f: %d, %d, %d" % (pal[0], pal[1][0], pal[1][1], pal[1][2]))
