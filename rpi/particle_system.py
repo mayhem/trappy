@@ -21,39 +21,24 @@ class Particle:
 
 class EffectParticleSystem(Effect):
 
-    FADER_SPEED = 2
     FADER_COUNT = 3
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self._particle_count = self._map_count_value(event.fader_values[self.FADER_COUNT])
         self.particles = []
 
-    @property
-    def particle_count(self):
-        self.lock.acquire()
-        count = self._particle_count
-        self.lock.release()
-        return int(count)
+    def map_fader_value(self, fader, value):
+        if fader == self.FADER_COUNT:
+            # scale to MAX_PARTICLE_COUNT
+            return value * (self.MAX_PARTICLE_COUNT-1) + 1
 
-    def _map_count_value(self, value):
-        # scale to MAX_PARTICLE_COUNT
-        return value * (self.MAX_PARTICLE_COUNT-1) + 1
+        return None
 
     def print_palette(self, palette):
         for pal in palette:
             print("%.2f: " % pal[0], pal[1])
         print()
-
-    def accept_event(self, event):
-        super().accept_event(event)
-        if isinstance(event, FaderEvent):
-            if event.fader == self.FADER_COUNT:
-                self.lock.acquire()
-                self._particle_count = self._map_count_value(event.value)
-                self.lock.release()
-            return
 
     def render_leds(self, t, background_color=(0,0,0)):
 
@@ -95,7 +80,7 @@ class EffectParticleSystem(Effect):
                 sleep(.01)
                 continue
 
-            max_count = self.particle_count
+            max_count = int(self.fader_value(self.FADER_COUNT))
             if max_count == self.driver.strips:
                 velocity = 1 + randint(2, 6)
                 self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, 0))

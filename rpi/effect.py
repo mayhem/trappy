@@ -23,6 +23,9 @@ class Effect(Thread):
         self.color_index = 0
         self._speed = event.fader_values[self.FADER_SPEED]
         self._direction = DirectionEvent.OUTWARD
+        self.faders = []
+        for fader, value in enumerate(event.fader_values):
+            self.faders.append(self.map_fader_value(fader, value))
 
         self.instant_color_queue = Queue()
 
@@ -48,6 +51,22 @@ class Effect(Thread):
             self.instant_color_queue.put(event.color)
             self.lock.release()
             return
+
+        if isinstance(event, FaderEvent):
+            self.lock.acquire()
+            self.faders[event.fader] = self.map_fader_value(event.fader, event.value)
+            self.lock.release()
+            return
+
+    def fader_value(self, fader):
+        self.lock.acquire()
+        value = self.faders[fader]
+        self.lock.release()
+        return value    
+
+    def map_fader_value(self, fader, value):
+        """ Can be overridden in derived class to provide a mapping function for a fader """
+        return None
 
     def get_next_color(self):
         if self.instant_color_queue.qsize() > 0:

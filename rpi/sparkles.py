@@ -18,28 +18,13 @@ class EffectSparkles(Effect):
         super().__init__(driver, event, apc, timeout)
         self.lock = Lock()
         self.hue = 0.0
-        self._num_dots = self._map_num_dots_value(event.fader_values[self.FADER_NUM_DOTS])
         self.current_colors = []
 
-    @property
-    def num_dots(self):
-        self.lock.acquire()
-        num_dots = self._num_dots    
-        self.lock.release()
-        return num_dots    
+    def map_fader_value(self, fader, value):
+        if fader == self.FADER_NUM_DOTS:
+            return int(value * ((self.driver.strips * 2) - 1) + 1)
 
-    def _map_num_dots_value(self, value):
-        return int(value * ((self.driver.strips * 2) - 1) + 1)
-
-    def accept_event(self, event):
-        super().accept_event(event)
-
-        if isinstance(event, FaderEvent):
-            if event.fader == self.FADER_NUM_DOTS:
-                self.lock.acquire()
-                self._num_dots = self._map_num_dots_value(event.value)
-                self.lock.release()
-            return
+        return None
 
     def run(self):
 
@@ -60,10 +45,12 @@ class EffectSparkles(Effect):
                     color[j] = int(float(color[j]) * self.FADE_CONSTANT)
                 led_data[j] = color
 
+            num_dots = int(self.fader_value(self.FADER_NUM_DOTS))
+
             # Add more sparkles
             strips = [ x for x in range(self.driver.strips)]
             shuffle(strips)
-            for s in strips[:self.num_dots]:
+            for s in strips[:num_dots]:
                 led = randint(0, self.driver.leds-1)
                 led_data[(self.driver.leds * s) + led] = self.get_next_color()
 

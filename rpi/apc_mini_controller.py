@@ -55,7 +55,7 @@ class APCMiniMk2Controller(Thread):
         self._exit = False
         self.blinker = Blinker(self)
         self.blinker.start()
-        self.fader_values = [ 0.0, 0.0, 1.0, .5, .5, .5, .5, .5, .5 ]
+        self.fader_values = [ 1.0, 1.0, .5, .5, .5, .5, .5, .5, .5 ]
         self.direction = DirectionEvent.OUTWARD
         self.key_down_time = None
 

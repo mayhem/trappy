@@ -1,4 +1,5 @@
 from math import fabs, fmod
+import traceback
 
 class Gradient(object):
     def __init__(self, palette, leds=1):
@@ -11,14 +12,16 @@ class Gradient(object):
         self.led_offset = 0.0
 
     def _validate_palette(self, palette):
-
         if len(palette) < 2:
+            self.print_palette(palette)
             raise ValueError("Palette must have at least two points.")
 
         if palette[0][0] > 0.0:
+            self.print_palette(palette)
             raise ValueError("First point in palette must be less than or equal to 0.0")
 
         if palette[-1][0] < 1.0:
+            self.print_palette(palette)
             raise ValueError("Last point in palette must be greater than or equal to 1.0")
 
     def set_scale(self, scale):
@@ -27,9 +30,9 @@ class Gradient(object):
     def set_offset(self, offset):
         self.led_offset = offset
 
-    def print_palette(self):
+    def print_palette(self, palette):
         print("Gradient palette:")
-        for pal in self.palette:
+        for pal in palette or self.palette:
             print("%.3f: %d, %d, %d" % (pal[0], pal[1][0], pal[1][1], pal[1][2]))
         print()
 

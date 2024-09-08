@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from colorsys import hsv_to_rgb
 from time import sleep, monotonic
-from threading import Lock
 
 from gradient import Gradient
 from random import random, randint
@@ -18,26 +17,19 @@ class EffectGradientScroller(Effect):
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.lock = Lock()
         self.hue = 0.0
-        self._spacing = self._map_spacing_value(event.fader_values[self.FADER_SPACING])
         self.current_colors = []
 
-    @property
-    def spacing(self):
-        self.lock.acquire()
-        spacing = self._spacing    
-        self.lock.release()
-        return spacing    
-
-    def _map_spacing_value(self, value):
+    def map_fader_value(self, fader, value):
         # scale to SPACING_RANGE_MIN and SPACING_RANGE_MAX
-        return value * self.SPACING_RANGE_MAX + self.SPACING_RANGE_MIN
+        if fader == self.FADER_SPACING:
+            return value * self.SPACING_RANGE_MAX + self.SPACING_RANGE_MIN
+
+        return None
 
     def generate_palette(self, offset, spacing):
         if offset > 0.0:
-            print("Offset must be negative! (is %.03f)" % offset)
-            return
+            raise ValueError("Offset must be negative! (is %.03f)" % offset)
 
         pal = []
         for i, col in enumerate(self.current_colors):
@@ -46,30 +38,21 @@ class EffectGradientScroller(Effect):
 
         return pal
 
-    def print_palette(self, palette):
+    def print_palette(self, palette=None):
         for pal in palette:
             print("%.2f: " % pal[0], pal[1])
         print()
 
-    def accept_event(self, event):
-        super().accept_event(event)
-
-        if isinstance(event, FaderEvent):
-            if event.fader == self.FADER_SPACING:
-                self.lock.acquire()
-                self._spacing = self._map_spacing_value(event.value)
-                self.lock.release()
-            return
-
     def run(self):
 
         shift_dist = .02
-        offset = -self.spacing
+        spacing = self.fader_value(self.FADER_SPACING)
+        offset = -spacing
         for i in range(int(1.0 / self.SPACING_RANGE_MIN) + 2):
             self.current_colors.append(self.colors[self.color_index][:3])
             self.color_index = (self.color_index + 1) % len(self.colors)
 
-        g = Gradient(self.generate_palette(offset, self.spacing))
+        g = Gradient(self.generate_palette(offset, spacing))
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -96,17 +79,19 @@ class EffectGradientScroller(Effect):
             else:
                 offset -= shift_dist
             if offset > 0.0:
-                offset -= self.spacing
+                offset -= spacing
                 self.current_colors.insert(0, self.get_next_color())
                 del self.current_colors[-1]
 
-            if offset < -self.spacing:
-                offset += self.spacing
+            if offset < -spacing:
+                offset += spacing
                 self.current_colors.append(self.get_next_color())
                 del self.current_colors[0]
 
-            g.palette = self.generate_palette(offset, self.spacing)
+            g.palette = self.generate_palette(offset, spacing)
 
             max_delay = .1
             delay = (1.0 - speed) * max_delay
             sleep(delay)
+
+            spacing = self.fader_value(self.FADER_SPACING)
