@@ -55,7 +55,7 @@ class Effect(Thread):
 
         new_color  = self.colors[self.color_index][:3]
         self.color_index = (self.color_index + 1) % len(self.colors)
-        return new_color
+        return list(new_color)
 
     @property
     def speed(self):
