@@ -22,6 +22,7 @@ class Particle:
 class EffectParticleSystem(Effect):
 
     FADER_COUNT = 3
+    FADER_SPRITE = 4
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
@@ -32,6 +33,9 @@ class EffectParticleSystem(Effect):
         if fader == self.FADER_COUNT:
             # scale to MAX_PARTICLE_COUNT
             return value * (self.MAX_PARTICLE_COUNT-1) + 1
+
+        if fader == self.FADER_SPRITE:
+            return value * 254 + 1
 
         return None
 
@@ -59,7 +63,12 @@ class EffectParticleSystem(Effect):
                 if pos >= self.driver.leds:
                     is_alive = False
                 else:
-                    led_data[(s * self.driver.leds) + pos] = next_color
+                    if p.sprite_pattern == 1:
+                        led_data[(s * self.driver.leds) + pos] = next_color
+                    else:
+                        for i in range(8):
+                            if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
+                                led_data[(s * self.driver.leds) + pos + i] = next_color
 
             if is_alive:
                 still_alive.append(p)
@@ -76,15 +85,16 @@ class EffectParticleSystem(Effect):
                 return
 
             max_count = int(self.fader_value(self.FADER_COUNT))
+            sprite = int(self.fader_value(self.FADER_SPRITE))
             if max_count == self.driver.strips:
                 velocity = 1 + randint(2, 6)
-                self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, 0))
+                self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, sprite))
             else:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
                 for s in strips[:max_count]:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, 0, velocity, 0))
+                    self.particles.append(Particle(t, s, 0, velocity, sprite))
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
