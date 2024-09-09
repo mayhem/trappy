@@ -155,23 +155,16 @@ class EffectScroller(Effect):
 
     def run(self):
 
-        variant = 1
         buf = [[0,0,0] for i in range(NUM_LEDS * NUM_STRIPS)]
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 80, 255]], [1.0, [0, 0, 255]]])
 
-        if variant == 0:
-            pattern = PatternAll(RowSingleDots(palette, randint(0, 1)))
-        else:
-            pattern = PatternAll(RowWibble(palette, (0)))
+        pattern0 = PatternEveryOther(RowRainbow(palette))
+        pattern1 = PatternEveryOther(RowRandomRainbow(palette))
 
         row_index = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 2)
-            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS * 2)
-            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS)
-            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS)
-            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 2)
-            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS * 2)
+            row_index = self.scroll(pattern0, buf, row_index, NUM_LEDS * 5)
+            row_index = self.scroll(pattern1, buf, row_index, NUM_LEDS * 5)

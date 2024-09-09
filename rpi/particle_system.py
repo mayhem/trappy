@@ -10,10 +10,11 @@ from color import hue_to_rgb, random_color
 class Particle:
 
     STRIP_ALL = -1
-    def __init__(self, t, strip, position, velocity, sprite_pattern):
+    def __init__(self, t, strip, color, position, velocity, sprite_pattern):
         """ strip can be a strip number, STRIP_ALL or a list of strips """
         self.t = t
         self.strip = strip
+        self.color = color
         self.position = position  # Initial position -- we're not tracking current position
         self.velocity = velocity
         self.sprite_pattern = sprite_pattern
@@ -57,18 +58,18 @@ class EffectParticleSystem(Effect):
                 strips = list(range(self.driver.strips))
 
             is_alive = True
-            next_color = self.get_next_color()
             for s in strips:
                 pos = p.velocity * (t - p.t) + p.position
                 if pos >= self.driver.leds:
                     is_alive = False
                 else:
+                    color = self.get_next_color() if p.color is None else p.color
                     if p.sprite_pattern == 1:
-                        led_data[(s * self.driver.leds) + pos] = next_color
+                        led_data[(s * self.driver.leds) + pos] = color
                     else:
                         for i in range(8):
                             if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                led_data[(s * self.driver.leds) + pos + i] = next_color
+                                led_data[(s * self.driver.leds) + pos + i] = color
 
             if is_alive:
                 still_alive.append(p)
@@ -80,23 +81,32 @@ class EffectParticleSystem(Effect):
     def run(self):
 
         t = 0
+        row = 0
+        variant = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            max_count = int(self.fader_value(self.FADER_COUNT))
+            count = int(self.fader_value(self.FADER_COUNT))
             sprite = int(self.fader_value(self.FADER_SPRITE))
-            if max_count == self.driver.strips:
-                velocity = 1 + randint(2, 6)
-                self.particles.append(Particle(t, Particle.STRIP_ALL, 0, velocity, sprite))
-            else:
-                strips = [ x for x in range(self.driver.strips)]
-                shuffle(strips)
-                for s in strips[:max_count]:
+
+            if variant == 0:
+                if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, 0, velocity, sprite))
+                    self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
+                else:
+                    strips = [ x for x in range(self.driver.strips)]
+                    shuffle(strips)
+                    for s in strips[:count]:
+                        velocity = 1 + randint(2, 6)
+                        self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+            else:
+                velocity = 2
+                if row % count == 0:
+                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
+            row += 1
 
             self.sleep()
