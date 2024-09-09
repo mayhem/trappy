@@ -40,11 +40,6 @@ class EffectSweep(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            speed = self.speed
-            if speed == 0:
-                sleep(.01)
-                continue
-
             hue_inc = self.fader_value(self.FADER_HUE)
             spread = self.fader_value(self.FADER_SPREAD)
             jitter = self.fader_value(self.FADER_JITTER)
@@ -58,6 +53,4 @@ class EffectSweep(Effect):
             self.driver.set(led_data)
 
             hue = fmod(hue + hue_inc, 1.0)
-            max_delay = .1
-            delay = (1.0 - speed) * max_delay
-            sleep(delay)
+            self.sleep()

@@ -124,7 +124,7 @@ class EffectScroller(Effect):
     def __init__(self, driver, event, apc = None, timeout = None):
         Effect.__init__(self, driver, event, apc, timeout)
 
-    def scroll(self, pattern, delay, buf, row_index, num_rows):
+    def scroll(self, pattern, buf, row_index, num_rows):
         direction = 1 if num_rows > 0 else 0;
         for j in range(abs(num_rows)):
             if self.stop:
@@ -133,7 +133,7 @@ class EffectScroller(Effect):
             row = pattern.get(row_index)
             self.shift(buf, row, direction)
             self.driver.set(buf)
-            sleep(delay)
+            self.sleep()
             row_index += 1
  
         return row_index
@@ -155,7 +155,7 @@ class EffectScroller(Effect):
 
     def run(self):
 
-        variant = 0
+        variant = 1
         buf = [[0,0,0] for i in range(NUM_LEDS * NUM_STRIPS)]
         palette = Gradient([[0.0, [255, 0, 0]], [.5, [255, 80, 255]], [1.0, [0, 0, 255]]])
 
@@ -169,9 +169,9 @@ class EffectScroller(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            row_index = self.scroll(pattern, .01, buf, row_index, NUM_LEDS * 2)
-            row_index = self.scroll(pattern, .01, buf, row_index, -NUM_LEDS * 2)
-            row_index = self.scroll(pattern, .005, buf, row_index, NUM_LEDS)
-            row_index = self.scroll(pattern, .005, buf, row_index, -NUM_LEDS)
-            row_index = self.scroll(pattern, .01, buf, row_index, NUM_LEDS * 2)
-            row_index = self.scroll(pattern, .01, buf, row_index, -NUM_LEDS * 2)
+            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 2)
+            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS * 2)
+            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS)
+            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS)
+            row_index = self.scroll(pattern, buf, row_index, NUM_LEDS * 2)
+            row_index = self.scroll(pattern, buf, row_index, -NUM_LEDS * 2)

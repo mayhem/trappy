@@ -76,6 +76,19 @@ class Effect(Thread):
         self.color_index = (self.color_index + 1) % len(self.colors)
         return list(new_color)
 
+    def sleep(self):
+        while True:
+            speed = self.speed
+            if speed == 0:
+                sleep(.01)
+                continue
+
+            break
+
+        max_delay = .1
+        delay = (1.0 - speed) * max_delay
+        sleep(delay)
+
     @property
     def speed(self):
         self.lock.acquire()

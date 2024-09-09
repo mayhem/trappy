@@ -38,11 +38,6 @@ class EffectSparkles(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            speed = self.speed
-            if speed == 0:
-                sleep(.01)
-                continue
-
             num_dots = int(self.fader_value(self.FADER_NUM_DOTS))
             fade_constant = self.fader_value(self.FADER_FADE)
 
@@ -62,7 +57,4 @@ class EffectSparkles(Effect):
                 led_data[(self.driver.leds * s) + led] = self.get_next_color()
 
             self.driver.set(led_data)
-
-            max_delay = .1
-            delay = (1.0 - speed) * max_delay
-            sleep(delay)
+            self.sleep()

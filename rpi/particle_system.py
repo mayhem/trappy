@@ -75,11 +75,6 @@ class EffectParticleSystem(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            speed = self.speed
-            if speed == 0:
-                sleep(.01)
-                continue
-
             max_count = int(self.fader_value(self.FADER_COUNT))
             if max_count == self.driver.strips:
                 velocity = 1 + randint(2, 6)
@@ -94,6 +89,4 @@ class EffectParticleSystem(Effect):
             self.driver.set(self.render_leds(t))
             t += self.direction 
 
-            max_delay = .1
-            delay = (1.0 - speed) * max_delay
-            sleep(delay)
+            self.sleep()

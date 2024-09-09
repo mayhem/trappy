@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from colorsys import hsv_to_rgb
-from time import sleep, monotonic
+from time import monotonic
 
 from gradient import Gradient
 from random import random, randint
@@ -57,11 +57,6 @@ class EffectGradientScroller(Effect):
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
-            speed = self.speed
-            if speed == 0:
-                sleep(.01)
-                continue
-
             # Calculate the strip data once and save it
             strip_data = []
             for j in range(self.driver.leds):
@@ -90,8 +85,6 @@ class EffectGradientScroller(Effect):
 
             g.palette = self.generate_palette(offset, spacing)
 
-            max_delay = .1
-            delay = (1.0 - speed) * max_delay
-            sleep(delay)
+            self.sleep()
 
             spacing = self.fader_value(self.FADER_SPACING)
