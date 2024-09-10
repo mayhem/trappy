@@ -8,7 +8,8 @@ from event import *
 
 class Effect(Thread):
 
-    FADER_SPEED = 2
+    FADER_BRIGHTNESS = 2
+    FADER_SPEED = 3
 
     def __init__(self, driver, event, apc=None, timeout=None):
         Thread.__init__(self)
@@ -57,6 +58,10 @@ class Effect(Thread):
             self.faders[event.fader] = self.map_fader_value(event.fader, event.value)
             self.lock.release()
             return
+
+    def get_active_faders(self):
+        """ return a list of integer values that indicate which faders are active for this effect """
+        return []
 
     def fader_value(self, fader):
         self.lock.acquire()

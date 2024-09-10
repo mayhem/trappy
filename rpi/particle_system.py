@@ -22,13 +22,16 @@ class Particle:
 
 class EffectParticleSystem(Effect):
 
-    FADER_COUNT = 3
-    FADER_SPRITE = 4
+    FADER_COUNT = 4
+    FADER_SPRITE = 5
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
         self.particles = []
+
+    def get_active_faders(self):
+        return [ self.FADER_COUNT, self.FADER_SPRITE ]
 
     def map_fader_value(self, fader, value):
         if fader == self.FADER_COUNT:

@@ -73,6 +73,9 @@ class Trappy:
         self.effect_classes.append(EffectPOV)
         self.effect_classes.append(EffectScroller)
 
+        for i in range(len(self.effect_classes)):
+            self.apc.scene_on(i)
+
         self.current_effect = None
 
     def queue_event(self, event, avoid_duplicates=False):
@@ -103,6 +106,17 @@ class Trappy:
                            self.current_effect = None
 
                         self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
+                        faders = self.current_effect.get_active_faders()
+                        for f in faders:
+                            if f in [0,1,2,3]:
+                                raise ValueError("Faders must be between 4 and 8.")
+
+                        for f in range(4, 9):
+                            if f in faders:
+                                self.apc.track_on(f)
+                            else:
+                                self.apc.track_clear(f)
+
                         self.current_effect.start()
 
                     continue

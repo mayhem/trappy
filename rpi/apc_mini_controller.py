@@ -97,8 +97,9 @@ class APCMiniMk2Controller(Thread):
                 self.m_in.open_port(index)
                 break
 
-        self.clear_pads()
-        self.clear_tracks()
+        self.pads_clear_all()
+        self.scenes_clear_all()
+        self.tracks_clear_all()
         pad_msg = []
         colors = []
         for pad in range(0, 64):
@@ -166,7 +167,7 @@ class APCMiniMk2Controller(Thread):
         self.m_out.send_message(msg)
         sleep(.005)
 
-    def clear_pads(self):
+    def pads_clear_all(self):
         for pad in range(64):
             self.m_out.send_message([0x96, pad, 0])
             sleep(.0001)
@@ -183,18 +184,39 @@ class APCMiniMk2Controller(Thread):
         self.m_out.send_message([0x96, pad, 0])
         sleep(.005)
 
-    def clear_tracks(self):
+    def tracks_clear_all(self):
         for track in range(8):
             self.m_out.send_message([0x90, 0x64 + track, 0])
             sleep(.0001)
 
-    def blink_track(self, track):
-        self.m_out.send_message([0x90, track, 2])
+    def track_on(self, track):
+        self.m_out.send_message([0x90, 0x64 + track, 1])
         sleep(.005)
 
-    def clear_track(self, track):
-        self.m_out.send_message([0x90, track, 0])
+    def track_blink(self, track):
+        self.m_out.send_message([0x90, 0x64 + track, 2])
         sleep(.005)
+
+    def track_clear(self, track):
+        self.m_out.send_message([0x90, 0x64 + track, 0])
+        sleep(.005)
+
+    def scene_on(self, track):
+        self.m_out.send_message([0x90, 0x70 + track, 1])
+        sleep(.005)
+
+    def scene_blink(self, track):
+        self.m_out.send_message([0x90, 0x70 + track, 2])
+        sleep(.005)
+
+    def scene_clear(self, track):
+        self.m_out.send_message([0x90, 0x70 + track, 0])
+        sleep(.005)
+
+    def scenes_clear_all(self):
+        for track in range(8):
+            self.scene_clear(track)
+            sleep(.0001)
 
     def update_color(self, pad, color):
         hue, _, _ = rgb_to_hsv(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
@@ -204,6 +226,11 @@ class APCMiniMk2Controller(Thread):
 
     def run(self):
 
+        # indicate that the first 4 faders do stuff
+        self.track_on(0)
+        self.track_on(1)
+        #self.track_on(2)
+        self.track_on(3)
 
         current_track = None
         while not self._exit:
@@ -300,15 +327,21 @@ class APCMiniMk2Controller(Thread):
                     for bpad in blinking:
                         self.update_color(bpad, self.custom_colors[bpad])
                     continue
+
+                # brightness
+                if fader == 50:
+                    value = m[0][2] / 127.0
+                    self.queue.put(BrightnessEvent(value))
+                    continue
            
                 # speed
-                if fader == 50:
+                if fader == 51:
                     value = m[0][2] / 127.0
                     self.queue.put(SpeedEvent(value))
                     continue
 
                 # General fader, passed to effect
-                if fader >= 51 and fader <= 56:
+                if fader >= 52 and fader <= 56:
                     # calculate 0 - 1.0
                     self.queue.put(FaderEvent(fader - 48, value))
                     continue
@@ -318,5 +351,6 @@ class APCMiniMk2Controller(Thread):
 
             print(m)
 
-        self.clear_pads()
-        self.clear_tracks()
+        self.pads_clear_all()
+        self.tracks_clear_all()
+        self.scenes_clear_all()

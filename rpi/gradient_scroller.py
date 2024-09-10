@@ -10,8 +10,7 @@ from color import hue_to_rgb, random_color
 
 class EffectGradientScroller(Effect):
 
-    FADER_SPEED = 2
-    FADER_SPACING = 3
+    FADER_SPACING = 4
     SPACING_RANGE_MIN = .025
     SPACING_RANGE_MAX = .5 - SPACING_RANGE_MIN
 
@@ -19,6 +18,9 @@ class EffectGradientScroller(Effect):
         super().__init__(driver, event, apc, timeout)
         self.hue = 0.0
         self.current_colors = []
+
+    def get_active_faders(self):
+        return [ self.FADER_SPACING ]
 
     def map_fader_value(self, fader, value):
         # scale to SPACING_RANGE_MIN and SPACING_RANGE_MAX

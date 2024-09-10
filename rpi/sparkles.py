@@ -11,8 +11,8 @@ from color import hue_to_rgb, random_color
 
 class EffectSparkles(Effect):
 
-    FADER_NUM_DOTS = 3
-    FADER_FADE = 4
+    FADER_NUM_DOTS = 4
+    FADER_FADE = 5
     FADE_CONSTANT = .85
 
     def __init__(self, driver, event, apc = None, timeout=None):
@@ -20,6 +20,10 @@ class EffectSparkles(Effect):
         self.lock = Lock()
         self.hue = 0.0
         self.current_colors = []
+
+    def get_active_faders(self):
+        return [ self.FADER_NUM_DOTS, self.FADER_FADE ]
+
 
     def map_fader_value(self, fader, value):
         if fader == self.FADER_NUM_DOTS:

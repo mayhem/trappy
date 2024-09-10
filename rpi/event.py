@@ -19,6 +19,10 @@ class SpeedEvent:
     def __init__(self, speed):
         self.speed = speed
 
+class BrightnessEvent:
+    def __init__(self, brightness):
+        self.brightness = brightness
+
 class DirectionEvent:
     INWARD = -1
     OUTWARD = 1
