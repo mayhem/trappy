@@ -1,8 +1,9 @@
 class EffectEvent:
 
-    def __init__(self, effect, float_values=None, color_values=None, fader_values=None):
+    def __init__(self, effect, variant = 0, float_values=None, color_values=None, fader_values=None):
         # Which control is sending this message?
         self.effect = effect
+        self.variant = variant
         self.float_values = float_values
         self.color_values = color_values
         self.fader_values = fader_values
@@ -41,3 +42,7 @@ class FaderEvent:
 class InstantColorEvent:
     def __init__(self, color):
         self.color = color
+
+class EffectVariantEvent:
+    def __init__(self, variant):
+        self.variant = variant

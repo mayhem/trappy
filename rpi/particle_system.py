@@ -25,6 +25,7 @@ class EffectParticleSystem(Effect):
     FADER_COUNT = 4
     FADER_SPRITE = 5
     MAX_PARTICLE_COUNT = 8
+    VARIANTS = 2
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -85,7 +86,6 @@ class EffectParticleSystem(Effect):
 
         t = 0
         row = 0
-        variant = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -93,7 +93,7 @@ class EffectParticleSystem(Effect):
             count = int(self.fader_value(self.FADER_COUNT))
             sprite = int(self.fader_value(self.FADER_SPRITE))
 
-            if variant == 0:
+            if self.variant == 0:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
                     self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))

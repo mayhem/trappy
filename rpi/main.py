@@ -57,7 +57,7 @@ class Trappy:
 
         self.driver.clear()
 
-        # setup out effects
+        # setup effects
         self.effect_classes = []
         self.effect_classes.append(EffectGradientScroller)
         self.effect_classes.append(EffectParticleSystem)
@@ -68,9 +68,11 @@ class Trappy:
 
         self.current_effect = None
 
+        effect_variants = [ eff.VARIANTS for eff in self.effect_classes ]
+
         # setup the APC
         self.queue = EventQueue()
-        self.apc = APCMiniMk2Controller(self.queue, [ 5,4,3,7,8, 3, 4, 2 ])
+        self.apc = APCMiniMk2Controller(self.queue, effect_variants)
         self.apc.startup()
         self.apc.start()
 

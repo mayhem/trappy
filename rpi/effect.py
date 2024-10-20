@@ -10,6 +10,7 @@ class Effect(Thread):
 
     FADER_BRIGHTNESS = 2
     FADER_SPEED = 3
+    VARIANTS = 1
 
     def __init__(self, driver, event, apc=None, timeout=None):
         Thread.__init__(self)
@@ -19,6 +20,7 @@ class Effect(Thread):
         self.apc = apc
         self.timeout = timeout
         self.event = event
+        self.variant = event.variant
 
         self.colors = event.color_values
         self.color_index = 0
@@ -59,6 +61,12 @@ class Effect(Thread):
             self.lock.release()
             return
 
+        if isinstance(event, EffectVariantEvent):
+            self.lock.acquire()
+            self.variant = event.variant
+            self.lock.release()
+            return
+
     def get_active_faders(self):
         """ return a list of integer values that indicate which faders are active for this effect """
         return []
@@ -80,6 +88,9 @@ class Effect(Thread):
         new_color  = self.colors[self.color_index][:3]
         self.color_index = (self.color_index + 1) % len(self.colors)
         return list(new_color)
+
+    def get_num_variants(self):
+        return 1
 
     def sleep(self):
         while True:

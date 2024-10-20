@@ -39,7 +39,7 @@ class APCMiniMk2ControllerWatchdog(Thread):
 
 class APCMiniMk2Controller(Thread):
 
-    def __init__(self, queue, effect_groups):
+    def __init__(self, queue, effect_variants):
         Thread.__init__(self)
 
         self._is_connected = False
@@ -58,7 +58,7 @@ class APCMiniMk2Controller(Thread):
         self.fader_values = [ 1.0, 1.0, .5, .5, .5, .5, .5, .5, .5 ]
         self.direction = DirectionEvent.OUTWARD
         self.key_down_time = None
-        self.effect_groups = effect_groups
+        self.effect_variants = effect_variants
 
         self.watchdog = APCMiniMk2ControllerWatchdog(self)
         self.watchdog.start()
@@ -156,7 +156,7 @@ class APCMiniMk2Controller(Thread):
 
         for col in range(8):
             try:
-                num_sub_effects = self.effect_groups[col]
+                num_sub_effects = self.effect_variants[col]
             except IndexError:
                 num_sub_effects = 0
 
@@ -286,11 +286,20 @@ class APCMiniMk2Controller(Thread):
         self.blinker.update_blink_color(pad, new_color)
 
     def handle_scene_pad_press(self, pad):
+
+        row = 7 - (pad // 8)
+        col = pad - ((7 - row) * 8)
+
+        # the column determines the effect, the row the variant
+        effect = col
+        variant = row
+
         colors = []
         for col in self.custom_colors:
             if col != (0,0,0):
                 colors.append(col)
-        #self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
+
+        self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
     
     def run(self):
 
@@ -336,7 +345,7 @@ class APCMiniMk2Controller(Thread):
 
                     if self.screen == 1:
                         self.handle_scene_pad_press(pad)
-                        return
+                        continue
 
                     # Check to see if this is a long press
                     if press_duration > .5 and pad < 8:
