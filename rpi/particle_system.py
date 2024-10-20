@@ -86,6 +86,8 @@ class EffectParticleSystem(Effect):
 
         t = 0
         row = 0
+        strip = 0
+        strip_step = 1
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -104,9 +106,14 @@ class EffectParticleSystem(Effect):
                         velocity = 1 + randint(2, 6)
                         self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
             else:
+                # Use fader count in this!
                 velocity = 2
-                if row % count == 0:
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                self.particles.append(Particle(t, strip, self.get_next_color(), 0, velocity, sprite))
+                if strip == 7:
+                    strip_step = -1
+                if strip == 0:
+                    strip_step = 1
+                strip += strip_step
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
