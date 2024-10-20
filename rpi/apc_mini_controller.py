@@ -39,7 +39,7 @@ class APCMiniMk2ControllerWatchdog(Thread):
 
 class APCMiniMk2Controller(Thread):
 
-    def __init__(self, queue):
+    def __init__(self, queue, effect_groups):
         Thread.__init__(self)
 
         self._is_connected = False
@@ -58,6 +58,7 @@ class APCMiniMk2Controller(Thread):
         self.fader_values = [ 1.0, 1.0, .5, .5, .5, .5, .5, .5, .5 ]
         self.direction = DirectionEvent.OUTWARD
         self.key_down_time = None
+        self.effect_groups = effect_groups
 
         self.watchdog = APCMiniMk2ControllerWatchdog(self)
         self.watchdog.start()
@@ -100,6 +101,28 @@ class APCMiniMk2Controller(Thread):
         self.pads_clear_all()
         self.scenes_clear_all()
         self.tracks_clear_all()
+
+        self.screen = 0
+        self.num_screens = 2
+        self.update_screen(0)
+
+    def update_screen(self, screen):
+
+        if screen < 0 or screen > self.num_screens:
+            return
+
+        self.screen = screen
+        if self.screen == 0:
+            self.setup_hue_screen()
+            return
+
+        if self.screen == 1:
+            self.setup_scene_screen()
+            return
+
+
+    def setup_hue_screen(self):
+
         pad_msg = []
         colors = []
         for pad in range(0, 64):
@@ -114,6 +137,47 @@ class APCMiniMk2Controller(Thread):
                 b = int(b * 255)
             colors.append((r,g,b, hue))
             pad_msg.extend([pad, pad, r >> 7, r & 0x7F, g >> 7, g & 0x7F, b >> 7, b & 0x7F])
+
+        self.send_pad_msgs(pad_msg)
+
+        for i, col in enumerate(self.custom_colors):
+            self.set_pad_color(i, col)
+
+        self.colors = colors
+
+    def setup_scene_screen(self):
+
+        pad_msg = []
+
+        hue = 0.0
+        pad = 0
+
+        for col in range(8):
+            try:
+                num_sub_effects = self.effect_groups[col]
+            except IndexError:
+                num_sub_effects = 0
+
+            for row in range(8):
+                if row < num_sub_effects:
+                    r,g,b = hsv_to_rgb(hue, 1.0, 1.0)
+                    r = int(r * 255)
+                    g = int(g * 255)
+                    b = int(b * 255)
+                else:
+                    r = g = b = 0
+
+                pad = ((7 - row) * 8) + col
+                pad_msg.append([pad, pad, r >> 7, r & 0x7F, g >> 7, g & 0x7F, b >> 7, b & 0x7F])
+
+            hue += .125
+
+        pad_msg = sorted(pad_msg, key=lambda a: a[0])
+        pad_msg = [x for xs in pad_msg for x in xs]
+
+        self.send_pad_msgs(pad_msg)
+
+    def send_pad_msgs(self, pad_msg):
 
         num_bytes = len(pad_msg) // 2
 
@@ -130,11 +194,6 @@ class APCMiniMk2Controller(Thread):
         msg.append(0xF7)
         self.m_out.send_message(msg)
         sleep(.01)
-
-        for i, col in enumerate(self.custom_colors):
-            self.set_pad_color(i, col)
-
-        self.colors = colors
 
 
     def shutdown(self):
@@ -295,11 +354,13 @@ class APCMiniMk2Controller(Thread):
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
-                    colors = []
-                    for col in self.custom_colors:
-                        if col != (0,0,0):
-                            colors.append(col)
-                    self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
+                    self.update_screen(scene)
+
+#                    colors = []
+#                    for col in self.custom_colors:
+#                        if col != (0,0,0):
+#                            colors.append(col)
+#                    self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
                     continue
             
                 continue
