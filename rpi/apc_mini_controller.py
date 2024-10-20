@@ -105,6 +105,8 @@ class APCMiniMk2Controller(Thread):
         self.screen = 0
         self.num_screens = 2
         self.update_screen(0)
+        for i in range(self.num_screens):
+            self.scene_on(i)
 
     def update_screen(self, screen):
 
@@ -160,7 +162,7 @@ class APCMiniMk2Controller(Thread):
 
             for row in range(8):
                 if row < num_sub_effects:
-                    r,g,b = hsv_to_rgb(hue, 1.0, 1.0)
+                    r,g,b = hsv_to_rgb(hue, 1.0, 1.0 - (.125 * row))
                     r = int(r * 255)
                     g = int(g * 255)
                     b = int(b * 255)
@@ -283,6 +285,13 @@ class APCMiniMk2Controller(Thread):
         new_color = (int(r * 255),int(g * 255),int(b * 255))
         self.blinker.update_blink_color(pad, new_color)
 
+    def handle_scene_pad_press(self, pad):
+        colors = []
+        for col in self.custom_colors:
+            if col != (0,0,0):
+                colors.append(col)
+        #self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
+    
     def run(self):
 
         # indicate that the first 4 faders do stuff
@@ -324,7 +333,11 @@ class APCMiniMk2Controller(Thread):
                 # pad press
                 if m[0][1] >= 0 and m[0][1] <= 63:
                     pad = m[0][1]
-    
+
+                    if self.screen == 1:
+                        self.handle_scene_pad_press(pad)
+                        return
+
                     # Check to see if this is a long press
                     if press_duration > .5 and pad < 8:
                         self.custom_colors[pad] = (0,0,0)
@@ -356,11 +369,6 @@ class APCMiniMk2Controller(Thread):
                     scene = m[0][1] - 112
                     self.update_screen(scene)
 
-#                    colors = []
-#                    for col in self.custom_colors:
-#                        if col != (0,0,0):
-#                            colors.append(col)
-#                    self.queue.put(EffectEvent(scene, color_values=colors, fader_values=self.fader_values))
                     continue
             
                 continue
@@ -408,7 +416,6 @@ class APCMiniMk2Controller(Thread):
                     continue
 
                 continue
-
 
             print(m)
 
