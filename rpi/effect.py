@@ -92,6 +92,17 @@ class Effect(Thread):
     def get_num_variants(self):
         return 1
 
+    def set_current_variant(self, variant):
+        self.lock.acquire()
+        self.variant = variant
+        self.lock.release()
+
+    def get_current_variant(self):
+        self.lock.acquire()
+        v = self.variant
+        self.lock.release()
+        return v
+
     def sleep(self):
         while True:
             speed = self.speed

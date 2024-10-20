@@ -83,6 +83,7 @@ class Trappy:
         self.queue.put(event)
 
     def run(self):
+        current_effect_index = -1
         try:
             print("main: wait for APC...")
             while not self.apc.is_connected:
@@ -101,12 +102,24 @@ class Trappy:
                         continue
 
                     if event.effect >= 0 and event.effect < len(self.effect_classes):
+
+                        # Is this effect currently running?
+                        if current_effect_index == event.effect:
+
+                            # Is it a new variant? If so, update the variant and leave the effect running
+                            if self.current_effect.get_current_variant() != event.variant:
+                                self.current_effect.set_current_variant(event.variant)
+                                continue
+
+                            # Same variant, in this case restart the effect.
+
                         if self.current_effect is not None:
                            self.current_effect.exit()
                            self.current_effect.join()
                            self.current_effect = None
 
                         self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
+                        current_effect_index = event.effect
                         faders = self.current_effect.get_active_faders()
                         for f in faders:
                             if f in [0,1,2,3]:
