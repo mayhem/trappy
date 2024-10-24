@@ -112,8 +112,7 @@ class EffectParticleSystem(Effect):
 
         t = 0
         row = 0
-        strip = 0
-        strip_step = 1
+        skip_count = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -145,15 +144,12 @@ class EffectParticleSystem(Effect):
                 self.detect_collisions(t)
 
             else:
-                # Use fader count in this!
-                velocity = 1 + randint(2, 6)
-                self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                if skip_count == 0:
+                    skip_count = count
+                    velocity = 1 + randint(2, 6)
+                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
 
-#                if strip == 7:
-#                   strip_step = -1
-#               if strip == 0:
-#                   strip_step = 1
-#               strip += strip_step
+                skip_count -= 1
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
