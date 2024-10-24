@@ -4,11 +4,14 @@ import smileds
 from gamma_led_strips import GAMMA
 from gamma_correct import GammaCorrector
 
+
 class LEDDriver:
 
     DEFAULT_GAMMA = 2.8
 
     def __init__(self, leds, strips):
+        global num_leds, num_strips
+
         self.strips = strips
         self.leds = leds
 

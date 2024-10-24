@@ -1,11 +1,13 @@
 from abc import abstractmethod
 from colorsys import hsv_to_rgb
+import itertools
 from time import sleep, monotonic
 
 from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
+from defs import NUM_LEDS, NUM_STRIPS
 
 class Particle:
 
@@ -17,12 +19,15 @@ class Particle:
         self.strips = [ strip ] if isinstance(strip, int) else strip
         assert isinstance(self.strips, list)
         if self.strips == [ Particle.STRIP_ALL ]:
-            self.strips = list(range(self.driver.strips))
+            self.strips = list(range(NUM_STRIPS))
 
         self.color = color        # The color of the particle
         self.position = position  # Initial position -- we're not tracking current position
         self.velocity = velocity
         self.sprite_pattern = sprite_pattern
+
+        # If this is set, this particle will be removed after the next render pass
+        self.remove_after_next = False
 
 
 class EffectParticleSystem(Effect):
@@ -75,42 +80,33 @@ class EffectParticleSystem(Effect):
                             if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
                                 led_data[(s * self.driver.leds) + pos + i] = color
 
-            if is_alive:
+            if is_alive and not p.remove_after_next:
                 still_alive.append(p)
 
         self.particles = still_alive
 
         return led_data
 
-    def detect_collisions(self):
+    def detect_collisions(self, t, color = (255, 255, 255)):
 
-        still_alive = []
+        # Organize particles by strips 
+        strips = [ [] for i in range(self.driver.strips) ]
         for p in self.particles:
-            strips = [ p.strip ] if isinstance(p.strip, int) else p.strip
-            assert isinstance(strips, list)
+            for s in p.strips:
+                strips[s].append(p)
 
-            if strips == [ Particle.STRIP_ALL ]:
-                strips = list(range(self.driver.strips))
+        for strip in strips:
+            for a, b in itertools.combinations(strip, 2):
+                a_pos = int(a.velocity * (t - a.t) + a.position)
+                b_pos = int(b.velocity * (t - b.t) + b.position)
 
-            is_alive = True
-            for s in strips:
-                pos = int(p.velocity * (t - p.t) + p.position)
-                if pos >= self.driver.leds or pos < 0:
+                if (a.velocity > 0 and b.velocity < 0 and a_pos >= b_pos) or \
+                   (a.velocity < 0 and b.velocity > 0 and a_pos <= b_pos):
                     is_alive = False
+                    a.color = b.color = color
+                    a.remove_after_next = True
+                    b.remove_after_next = True
 
-                if is_alive:
-                    color = self.get_next_color() if p.color is None else p.color
-                    if p.sprite_pattern == 1:
-                        led_data[(s * self.driver.leds) + pos] = color
-                    else:
-                        for i in range(8):
-                            if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                led_data[(s * self.driver.leds) + pos + i] = color
-
-            if is_alive:
-                still_alive.append(p)
-
-        self.particles = still_alive
 
     def run(self):
 
@@ -142,19 +138,22 @@ class EffectParticleSystem(Effect):
                 shuffle(strips)
                 for s in strips[:count]:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), 0, velocity, sprite))
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(), self.driver.leds - 1, -velocity, sprite))
+                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, -velocity, sprite))
+
+                self.detect_collisions(t)
 
             else:
                 # Use fader count in this!
-                velocity = 2
-                self.particles.append(Particle(t, strip, self.get_next_color(), 0, velocity, sprite))
-                if strip == 7:
-                    strip_step = -1
-                if strip == 0:
-                    strip_step = 1
-                strip += strip_step
+                velocity = 1 + randint(2, 6)
+                self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+
+#                if strip == 7:
+#                   strip_step = -1
+#               if strip == 0:
+#                   strip_step = 1
+#               strip += strip_step
 
             self.driver.set(self.render_leds(t))
             t += self.direction 

@@ -81,12 +81,20 @@ class Effect(Thread):
         """ Can be overridden in derived class to provide a mapping function for a fader """
         return None
 
-    def get_next_color(self):
+    def get_next_color(self, ignore_odd_colors=False):
         if self.instant_color_queue.qsize() > 0:
             self.colors[self.color_index] = self.instant_color_queue.get()
 
         new_color  = self.colors[self.color_index][:3]
-        self.color_index = (self.color_index + 1) % len(self.colors)
+
+        if ignore_odd_colors:
+            num_colors = len(self.colors)
+            if num_colors % 2 == 1:
+                num_colors -= 1 
+            self.color_index = (self.color_index + 1) % num_colors
+        else:
+            self.color_index = (self.color_index + 1) % len(self.colors)
+
         return list(new_color)
 
     def get_num_variants(self):
