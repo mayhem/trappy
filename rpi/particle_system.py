@@ -12,9 +12,14 @@ class Particle:
     STRIP_ALL = -1
     def __init__(self, t, strip, color, position, velocity, sprite_pattern):
         """ strip can be a strip number, STRIP_ALL or a list of strips """
-        self.t = t
-        self.strip = strip
-        self.color = color
+        self.t = t                # Time when particle was added
+        # Which strip(s) to display particle on (is a list)
+        self.strips = [ strip ] if isinstance(strip, int) else strip
+        assert isinstance(self.strips, list)
+        if self.strips == [ Particle.STRIP_ALL ]:
+            self.strips = list(range(self.driver.strips))
+
+        self.color = color        # The color of the particle
         self.position = position  # Initial position -- we're not tracking current position
         self.velocity = velocity
         self.sprite_pattern = sprite_pattern
@@ -25,7 +30,7 @@ class EffectParticleSystem(Effect):
     FADER_COUNT = 4
     FADER_SPRITE = 5
     MAX_PARTICLE_COUNT = 8
-    VARIANTS = 2
+    VARIANTS = 3
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -55,18 +60,13 @@ class EffectParticleSystem(Effect):
 
         still_alive = []
         for p in self.particles:
-            strips = [ p.strip ] if isinstance(p.strip, int) else p.strip
-            assert isinstance(strips, list)
-
-            if strips == [ Particle.STRIP_ALL ]:
-                strips = list(range(self.driver.strips))
-
             is_alive = True
-            for s in strips:
-                pos = p.velocity * (t - p.t) + p.position
-                if pos >= self.driver.leds:
+            for s in p.strips:
+                pos = int(p.velocity * (t - p.t) + p.position)
+                if pos >= self.driver.leds or pos < 0:
                     is_alive = False
-                else:
+
+                if is_alive:
                     color = self.get_next_color() if p.color is None else p.color
                     if p.sprite_pattern == 1:
                         led_data[(s * self.driver.leds) + pos] = color
@@ -81,6 +81,36 @@ class EffectParticleSystem(Effect):
         self.particles = still_alive
 
         return led_data
+
+    def detect_collisions(self):
+
+        still_alive = []
+        for p in self.particles:
+            strips = [ p.strip ] if isinstance(p.strip, int) else p.strip
+            assert isinstance(strips, list)
+
+            if strips == [ Particle.STRIP_ALL ]:
+                strips = list(range(self.driver.strips))
+
+            is_alive = True
+            for s in strips:
+                pos = int(p.velocity * (t - p.t) + p.position)
+                if pos >= self.driver.leds or pos < 0:
+                    is_alive = False
+
+                if is_alive:
+                    color = self.get_next_color() if p.color is None else p.color
+                    if p.sprite_pattern == 1:
+                        led_data[(s * self.driver.leds) + pos] = color
+                    else:
+                        for i in range(8):
+                            if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
+                                led_data[(s * self.driver.leds) + pos + i] = color
+
+            if is_alive:
+                still_alive.append(p)
+
+        self.particles = still_alive
 
     def run(self):
 
@@ -105,6 +135,17 @@ class EffectParticleSystem(Effect):
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
                         self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+
+            elif self.variant == 1:
+
+                strips = [ x for x in range(self.driver.strips)]
+                shuffle(strips)
+                for s in strips[:count]:
+                    velocity = 1 + randint(2, 6)
+                    self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                    velocity = 1 + randint(2, 6)
+                    self.particles.append(Particle(t, s, self.get_next_color(), self.driver.leds - 1, -velocity, sprite))
+
             else:
                 # Use fader count in this!
                 velocity = 2
