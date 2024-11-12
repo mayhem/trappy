@@ -55,8 +55,13 @@ class EffectSweep(Effect):
             for l in range(self.driver.leds):
                 led_data[(strip * self.driver.leds) + l] = color
             self.driver.set(led_data)
+
             for l in range(self.driver.leds):
-                led_data[(strip * self.driver.leds) + l] = (0,0,0)
+                r = randint(0, 25)
+                if r >= 3:
+                    led_data[(strip * self.driver.leds) + l] = (0,0,0)
+                else:
+                    led_data[(strip * self.driver.leds) + l] = (255,255,255)
 
             strip = (strip + step) % self.driver.strips
             self.sleep()
