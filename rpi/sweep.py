@@ -35,7 +35,9 @@ class EffectSweep(Effect):
     def run(self):
 
         led_data = [ list([0,0,0]) for x in range(self.driver.strips * self.driver.leds) ]
-        hue = 0.0
+        strip = 0
+        step = 1
+        color = self.get_next_color()
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -44,13 +46,17 @@ class EffectSweep(Effect):
             spread = self.fader_value(self.FADER_SPREAD)
             jitter = self.fader_value(self.FADER_JITTER)
 
-            for strip in range(self.driver.strips):
-                h = fmod(hue + (strip * spread) + 1.0, 1.0)
-                g = Gradient([(0.0, hue_to_rgb(h-jitter)), (1.0, hue_to_rgb(h+jitter))], self.driver.leds)
-                for l in range(self.driver.leds):
-                    led_data[(strip * self.driver.leds) + l] = g.get_color(l / self.driver.leds)
+            if strip == self.driver.strips - 1 and step > 0:
+                step = -1
+            if strip == 0 and step < 0:
+                step = 1
+                color = self.get_next_color()
 
+            for l in range(self.driver.leds):
+                led_data[(strip * self.driver.leds) + l] = color
             self.driver.set(led_data)
+            for l in range(self.driver.leds):
+                led_data[(strip * self.driver.leds) + l] = (0,0,0)
 
-            hue = fmod(hue + hue_inc, 1.0)
+            strip = (strip + step) % self.driver.strips
             self.sleep()
