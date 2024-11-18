@@ -10,7 +10,7 @@ from color import hue_to_rgb, random_color
 
 def shift_color(color, shift):
     h, s, v = rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
-    h = fmod(h + shift, 1.0)
+    h = fmod(h + shift + 1.0, 1.0)
     r, g, b = hsv_to_rgb(h, s, v)
     return (int(255 * r), int(255 * g), int(255 * b))
 
@@ -22,25 +22,18 @@ def tri_color(color):
 
 class EffectSweep(Effect):
 
-    FADER_HUE = 3
-    FADER_SPREAD = 4
-    FADER_JITTER = 5
+    FADER_HUE = 4
     FADE_CONSTANT = .85
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.hue = 0.0
+
+    def get_active_faders(self):
+        return [ self.FADER_HUE ]
 
     def map_fader_value(self, fader, value):
         if fader == self.FADER_HUE:
-            return value / 20.0
-
-        if fader == self.FADER_SPREAD:
-            return value / 2.0
-
-        if fader == self.FADER_JITTER:
-            return value / 10.0
-
+            return value / 4 
         return None
 
     def run(self):
@@ -49,21 +42,25 @@ class EffectSweep(Effect):
         strip = 0
         step = 1
         color = self.get_next_color()
-        color_1, color_2 = tri_color(color)
+
+        hue = self.fader_value(self.FADER_HUE)
+        color_1 = shift_color(color, hue)
+        color_2 = shift_color(color, -hue)
+
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
             hue_inc = self.fader_value(self.FADER_HUE)
-            spread = self.fader_value(self.FADER_SPREAD)
-            jitter = self.fader_value(self.FADER_JITTER)
 
             if strip == self.driver.strips - 1 and step > 0:
                 step = -1
             if strip == 0 and step < 0:
                 step = 1
                 color = self.get_next_color()
-                color_1, color_2 = tri_color(color)
+                hue = self.fader_value(self.FADER_HUE)
+                color_1 = shift_color(color, hue)
+                color_2 = shift_color(color, -hue)
 
             for l in range(self.driver.leds):
                 led_data[(strip * self.driver.leds) + l] = color
