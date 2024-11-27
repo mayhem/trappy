@@ -54,6 +54,8 @@ class EffectRainbowSweep(Effect):
 
         self.user_color_gradient = Gradient(palette)
 
+        self.sweep_color_0 = self.get_next_color()
+        self.sweep_color_1 = self.get_next_color()
 
     def fill_segment_rainbow_sweep(self, led, phase, direction, segment):
         col = None
