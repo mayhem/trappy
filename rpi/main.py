@@ -7,7 +7,7 @@ from time import sleep, monotonic
 
 from scroller import EffectScroller
 from gradient_scroller import EffectGradientScroller
-from particle_system import EffectParticleSystem
+from chasing_dots import EffectChasingDots
 from sparkles import EffectSparkles
 from sweep import EffectSweep
 from rainbow import EffectRainbowSweep
@@ -61,7 +61,8 @@ class Trappy:
         # setup effects
         self.effect_classes = []
         self.effect_classes.append(EffectGradientScroller)
-        self.effect_classes.append(EffectParticleSystem)
+        self.effect_classes.append(EffectChasingDots)
+#        self.effect_classes.append(EffectDropIn)
         self.effect_classes.append(EffectSparkles)
         self.effect_classes.append(EffectSweep)
         self.effect_classes.append(EffectRainbowSweep)
