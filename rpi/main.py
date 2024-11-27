@@ -12,10 +12,9 @@ from sparkles import EffectSparkles
 from sweep import EffectSweep
 from rainbow import EffectRainbowSweep
 from pov import EffectPOV
-from defs import NUM_LEDS, NUM_STRIPS
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
-from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent
+from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent, BrightnessEvent
 
 class EventQueue:
     """ Similar to the Lock object, but previous duplicate events are dropped. """
@@ -49,7 +48,7 @@ class EventQueue:
 class Trappy:
 
     def __init__(self):
-        self.driver = LEDDriver(leds=NUM_LEDS, strips=NUM_STRIPS)
+        self.driver = LEDDriver()
         for i in range(0):
             self.driver.fill((255, 0, 255))
             sleep(.1)
@@ -136,6 +135,10 @@ class Trappy:
 
                         self.current_effect.start()
 
+                    continue
+
+                if isinstance(event, BrightnessEvent):
+                    self.driver.set_brightness(int(100 * event.brightness))
                     continue
 
                 if isinstance(event, GammaEvent):

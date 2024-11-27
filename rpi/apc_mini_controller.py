@@ -307,7 +307,7 @@ class APCMiniMk2Controller(Thread):
         # indicate that the first 4 faders do stuff
         self.track_on(0)
         self.track_on(1)
-        #self.track_on(2)
+        self.track_on(2)
         self.track_on(3)
 
         current_track = None
