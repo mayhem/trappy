@@ -23,6 +23,7 @@ class LEDDriver:
 
         self.gamma_correct = GammaCorrector()
         self.gamma_correct.set_gamma(self.DEFAULT_GAMMA)
+        self.last_8_threshold = 24 * self.leds
 
     def set_brightness(self, brightness):
         """
@@ -48,17 +49,35 @@ class LEDDriver:
         smileds.leds_set(leds)
         smileds.leds_send()
 
-    def set(self, buf, no_gamma=False):
-        ba = bytearray()
-        for col in buf:
+    def map_last_8(self, index, led, strip):
+        if strip < 8:
+            return index
+
+        strip = 7 - (strip - 8) + 8
+        return self.last_8_threshold + (3 * (strip * self.leds) + led)
+
+    def set(self, buf, no_gamma=False, reverse_last_8=False):
+        ba = bytearray([0,0,0] * self.strips * self.leds)
+        led = 0
+        strip = 0
+        for i, col in enumerate(buf):
             if no_gamma:
                 gcol = col
             else:
                 gcol = self.gamma_correct.gamma_correct(col)
+
             try:
-                ba += bytearray(gcol)
+                index = self.map_last_8(i, led, strip)
+                ba[index * 3] = gcol[0]
+                ba[index * 3 + 1] = gcol[1]
+                ba[index * 3 + 2] = gcol[2]
             except ValueError:
                 raise ValueError(col, " is invalid")
+
+            led += 1
+            if len == self.leds:
+                strip += 1
+                led = 0
 
         smileds.leds_set(ba)
         smileds.leds_send()
