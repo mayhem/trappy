@@ -229,7 +229,7 @@ class EffectRainbowSweep(Effect):
                 if col is not None:
                     led_data[(strip * self.driver.leds) + i] = col
 
-            self.driver.set(led_data, reverse_last_8=True)
+            self.driver.set(led_data)
             if self.driver.strips == 8:
                 strip, step, _pass, phase = self.increment_back_forth(strip, step, _pass, phase)
             else:

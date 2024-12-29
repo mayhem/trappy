@@ -51,12 +51,11 @@ class LEDDriver:
 
     def map_last_8(self, index, led, strip):
         if strip < 8:
-            return index
+            return index * 3
+        new_strip = 7 - (strip - 8)
+        return self.last_8_threshold + ((new_strip * self.leds + led) * 3)
 
-        strip = 7 - (strip - 8) + 8
-        return self.last_8_threshold + (3 * (strip * self.leds) + led)
-
-    def set(self, buf, no_gamma=False, reverse_last_8=False):
+    def set(self, buf, no_gamma=False):
         ba = bytearray([0,0,0] * self.strips * self.leds)
         led = 0
         strip = 0
@@ -68,14 +67,14 @@ class LEDDriver:
 
             try:
                 index = self.map_last_8(i, led, strip)
-                ba[index * 3] = gcol[0]
-                ba[index * 3 + 1] = gcol[1]
-                ba[index * 3 + 2] = gcol[2]
+                ba[index] = gcol[0]
+                ba[index + 1] = gcol[1]
+                ba[index + 2] = gcol[2]
             except ValueError:
                 raise ValueError(col, " is invalid")
 
             led += 1
-            if len == self.leds:
+            if led == self.leds:
                 strip += 1
                 led = 0
 
