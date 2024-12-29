@@ -6,6 +6,7 @@ from time import sleep, monotonic
 from threading import Thread, Lock
 import json
 import sys
+import os
 
 import rtmidi
 from effect import *
@@ -34,7 +35,8 @@ class APCMiniMk2ControllerWatchdog(Thread):
                 continue
 
             if self.controller.is_connected:
-                self.controller.is_connected = False
+                os._exit(-1)
+                return
 
 
 class APCMiniMk2Controller(Thread):
@@ -312,6 +314,8 @@ class APCMiniMk2Controller(Thread):
         self.track_on(3)
 
         current_track = None
+        key_down_time = None
+        reset_count = 0
         while not self._exit:
             m = self.m_in.get_message()
             if m is None:
@@ -380,6 +384,13 @@ class APCMiniMk2Controller(Thread):
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:
                     scene = m[0][1] - 112
+                    if scene == 7:
+                        reset_count += 1
+                        if reset_count == 5:
+                            os._exit(1)
+                    else:
+                        reset_count = 0
+
                     self.update_screen(scene)
 
                     continue

@@ -1,3 +1,3 @@
-smileds==2024.8.25.3
+smileds==2024.12.29.2
 python-rtmidi
 pyusb
