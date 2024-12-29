@@ -3,7 +3,7 @@ from time import sleep, monotonic
 import smileds
 from gamma_led_strips import GAMMA
 from gamma_correct import GammaCorrector
-from defs import NUM_LEDS, NUM_STRIPS, MAX_BRIGHTNESS, MIN_BRIGHTNESS
+from config import NUM_LEDS, NUM_STRIPS, MAX_BRIGHTNESS, MIN_BRIGHTNESS
 
 
 class LEDDriver:

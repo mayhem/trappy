@@ -7,7 +7,7 @@ from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
-from defs import NUM_LEDS, NUM_STRIPS
+from config import NUM_LEDS, NUM_STRIPS
 
 class Particle:
 

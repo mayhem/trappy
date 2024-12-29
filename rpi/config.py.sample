@@ -1,0 +1,11 @@
+# Number of LEDS per strip
+NUM_LEDS = 50 
+
+# Number of LED strips
+NUM_STRIPS = 8
+
+# Max brightness (per strips themselves) allowed
+MAX_BRIGHTNESS = 32
+
+# Minimum brightness required
+MIN_BRIGHTNESS = 2
