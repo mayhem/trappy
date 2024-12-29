@@ -115,12 +115,17 @@ class Trappy:
 
                             # Same variant, in this case restart the effect.
 
+                        # Check to see if the variant is supported
+                        new_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
+                        if event.variant >= new_effect.get_num_variants():
+                            continue
+
                         if self.current_effect is not None:
                            self.current_effect.exit()
                            self.current_effect.join()
                            self.current_effect = None
 
-                        self.current_effect = self.effect_classes[event.effect](self.driver, event, apc=self.apc)
+                        self.current_effect = new_effect
                         current_effect_index = event.effect
                         faders = self.current_effect.get_active_faders()
                         for f in faders:

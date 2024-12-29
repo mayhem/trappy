@@ -300,6 +300,7 @@ class APCMiniMk2Controller(Thread):
             if col != (0,0,0):
                 colors.append(col)
 
+        # Note: This could send events for effects that do not exist!
         self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
     
     def run(self):
@@ -373,6 +374,8 @@ class APCMiniMk2Controller(Thread):
                             continue
                     else:
                         self.queue.put(InstantColorEvent(self.colors[pad][:3]))
+
+                    continue
 
                 # scene press
                 if m[0][1] >= 112 and m[0][1] <= 119:

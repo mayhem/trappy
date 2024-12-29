@@ -98,7 +98,7 @@ class Effect(Thread):
         return list(new_color)
 
     def get_num_variants(self):
-        return 1
+        return self.VARIANTS
 
     def set_current_variant(self, variant):
         self.lock.acquire()
