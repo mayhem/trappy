@@ -56,11 +56,12 @@ class EffectRainbowSweep(Effect):
 
         self.sweep_color_0 = self.get_next_color()
         self.sweep_color_1 = self.get_next_color()
+        self.phase_inc = 0
 
-    def fill_segment_rainbow_sweep(self, led, phase, direction, segment):
+    def fill_segment_rainbow_sweep(self, led, _pass, phase, segment):
         col = None
         if phase == 0:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = self.quantized[led]
                 else:
@@ -69,7 +70,7 @@ class EffectRainbowSweep(Effect):
                 if segment % 2 == 1:
                     col = self.quantized[led]
         else:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = (0,0,0)
             else:
@@ -78,10 +79,10 @@ class EffectRainbowSweep(Effect):
 
         return col
 
-    def fill_segment_opposite(self, led, phase, direction, segment):
+    def fill_segment_opposite(self, led, _pass, phase, segment):
         col = None
         if phase == 0:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = self.sweep_color_0
                 else:
@@ -90,7 +91,7 @@ class EffectRainbowSweep(Effect):
                 if segment % 2 == 1:
                     col = self.sweep_color_1
         else:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = (0,0,0)
             else:
@@ -99,10 +100,10 @@ class EffectRainbowSweep(Effect):
 
         return col
 
-    def fill_segment_random_colors(self, led, phase, direction, segment):
+    def fill_segment_random_colors(self, led, _pass, phase, segment):
         col = None
         if phase == 0:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = self.segment_color
                 else:
@@ -111,7 +112,7 @@ class EffectRainbowSweep(Effect):
                 if segment % 2 == 1:
                     col = self.segment_color
         else:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = (0,0,0)
             else:
@@ -120,10 +121,10 @@ class EffectRainbowSweep(Effect):
 
         return col
 
-    def fill_segment_gradient(self, led, phase, direction, segment):
+    def fill_segment_gradient(self, led, _pass, phase, segment):
         col = None
         if phase == 0:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = self.user_color_gradient.get_color(led / self.driver.leds)
                 else:
@@ -132,7 +133,7 @@ class EffectRainbowSweep(Effect):
                 if segment % 2 == 1:
                     col = self.user_color_gradient.get_color(led / self.driver.leds)
         else:
-            if direction == 1:
+            if _pass == 0:
                 if segment % 2 == 0:
                     col = (0,0,0)
             else:
@@ -142,19 +143,19 @@ class EffectRainbowSweep(Effect):
         return col
 
 
-    def fill_segment(self, led, phase, direction, segment):
+    def fill_segment(self, led, _pass, phase, segment):
 
         if self.variant == 0:
-            return self.fill_segment_rainbow_sweep(led, phase, direction, segment)
+            return self.fill_segment_rainbow_sweep(led, _pass, phase, segment)
 
         if self.variant in (1, 4):
-            return self.fill_segment_opposite(led, phase, direction, segment)
+            return self.fill_segment_opposite(led, _pass, phase, segment)
 
         if self.variant == 2:
-            return self.fill_segment_random_colors(led, phase, direction, segment)
+            return self.fill_segment_random_colors(led, _pass, phase, segment)
 
         if self.variant == 3:
-            return self.fill_segment_gradient(led, phase, direction, segment)
+            return self.fill_segment_gradient(led, _pass, phase, segment)
 
         assert False
 
@@ -170,6 +171,33 @@ class EffectRainbowSweep(Effect):
     def start_segment(self, segment):
         self.segment_color = random_color()
 
+    def increment_back_forth(self, strip, step, _pass, phase):
+        strip += step
+        if strip == self.driver.strips and step > 0:
+            step = -1
+            _pass = (_pass + 1) % 2
+            strip = self.driver.strips - 1
+            self.start_sweep(step)
+        if strip == -1 and step < 0:
+            _pass = (_pass + 1) % 2 
+            step = 1
+            strip = 0
+            phase = (phase + 1) % 2
+            self.start_sweep(step)
+
+        return strip, step, _pass, phase
+
+    def increment_clockwise(self, strip, step, _pass, phase):
+        strip += step
+        if strip >= self.driver.strips:
+            strip = strip % self.driver.strips
+            _pass += 1
+            if _pass == 2:
+                phase = (phase + 1) % 2
+                _pass = 0
+        
+        return strip, step, _pass, phase
+
     def run(self):
 
         led_data = [ list([0,0,0]) for x in range(self.driver.strips * self.driver.leds) ]
@@ -182,6 +210,7 @@ class EffectRainbowSweep(Effect):
         self.init(segments)
 
         phase = 0
+        _pass = 0
         self.start_sweep(step)
         last_segment = None
         while not self.stop:
@@ -195,22 +224,15 @@ class EffectRainbowSweep(Effect):
                 if segment != last_segment:
                     self.start_segment(segment)
                     last_segment = segment
-                col = self.fill_segment(i, phase, step, segment)
+                col = self.fill_segment(i, _pass, phase, segment)
 
                 if col is not None:
                     led_data[(strip * self.driver.leds) + i] = col
 
             self.driver.set(led_data)
-
-            strip += step
-            if strip == self.driver.strips and step > 0:
-                step = -1
-                strip = self.driver.strips - 1
-                self.start_sweep(step)
-            if strip == -1 and step < 0:
-                step = 1
-                strip = 0
-                phase = (phase + 1) % 2
-                self.start_sweep(step)
+            if self.driver.strips == 8:
+                strip, step, _pass, phase = self.increment_back_forth(strip, step, _pass, phase)
+            else:
+                strip, step, _pass, phase = self.increment_clockwise(strip, step, _pass, phase)
 
             self.sleep()
