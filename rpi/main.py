@@ -10,6 +10,7 @@ from gradient_scroller import EffectGradientScroller
 from chasing_dots import EffectChasingDots
 from sparkles import EffectSparkles
 from sweep import EffectSweep
+from spiral import EffectSpiral
 from rainbow import EffectRainbowSweep
 from pov import EffectPOV
 from led_driver import LEDDriver
@@ -61,12 +62,12 @@ class Trappy:
         self.effect_classes = []
         self.effect_classes.append(EffectGradientScroller)
         self.effect_classes.append(EffectChasingDots)
-#        self.effect_classes.append(EffectDropIn)
         self.effect_classes.append(EffectSparkles)
         self.effect_classes.append(EffectSweep)
         self.effect_classes.append(EffectRainbowSweep)
         self.effect_classes.append(EffectPOV)
-        self.effect_classes.append(EffectScroller)
+#        self.effect_classes.append(EffectScroller)
+        self.effect_classes.append(EffectSpiral)
 
         self.current_effect = None
 

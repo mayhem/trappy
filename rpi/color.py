@@ -17,3 +17,15 @@ def rgb_to_hue(color):
 def random_color():
     return (randint(0, 255), randint(0, 255), randint(0, 255))
 
+def shift_color(color, shift):
+    h, s, v = rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
+    h = fmod(h + shift + 1.0, 1.0)
+    r, g, b = hsv_to_rgb(h, s, v)
+    return (int(255 * r), int(255 * g), int(255 * b))
+
+def opposite_color(color):
+    return shift_color(color, .5)
+
+def tri_color(color):
+    return shift_color(color, .33333), shift_color(color, .66666)
+

@@ -6,24 +6,15 @@ from time import sleep, monotonic
 
 from gradient import Gradient
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
-from color import hue_to_rgb, rgb_to_hue, random_color
+from color import hue_to_rgb, rgb_to_hue, random_color, shift_color
 
-def shift_color(color, shift):
-    h, s, v = rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
-    h = fmod(h + shift + 1.0, 1.0)
-    r, g, b = hsv_to_rgb(h, s, v)
-    return (int(255 * r), int(255 * g), int(255 * b))
 
-def opposite_color(color):
-    return shift_color(color, .5)
-
-def tri_color(color):
-    return shift_color(color, .33333), shift_color(color, .66666)
-
+# Too tired to finish the radar effect, will need to go back when fresh
 class EffectSweep(Effect):
 
     FADER_HUE = 4
-    FADE_CONSTANT = .85
+    FADE_CONSTANT = 1.0
+    VARIANTS = 1
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -42,11 +33,15 @@ class EffectSweep(Effect):
         strip = 0
         step = 1
         _pass = 0
-        color = self.get_next_color()
-
-        hue = self.fader_value(self.FADER_HUE)
-        color_1 = shift_color(color, hue)
-        color_2 = shift_color(color, -hue)
+        
+        if self.variant == 0:
+            color = self.get_next_color()
+            hue = self.fader_value(self.FADER_HUE)
+            color_1 = shift_color(color, hue)
+            color_2 = shift_color(color, -hue)
+        elif self.variant == 1:
+            color = [128, 128,128]
+            color_1 = [0, 128, 8]
 
         hue = 0.0
         hue_increment = .05
@@ -61,38 +56,57 @@ class EffectSweep(Effect):
                 led_data[(strip * self.driver.leds) + l] = color
             self.driver.set(led_data)
 
+            if self.variant == 3:
+                # Fade out existing data
+                for i in range(self.driver.strips * self.driver.leds):
+                    color = led_data[i]
+                    for j in range(3):
+                        color[j] = int(float(color[j]) * self.FADE_CONSTANT)
+                    led_data[i] = color
+
             for l in range(self.driver.leds):
-                r = randint(0, 25)
-                if _pass == 1 or r >= 3:
-                    led_data[(strip * self.driver.leds) + l] = (0,0,0)
-                else:
-                    if r % 2 == 0:
-                        led_data[(strip * self.driver.leds) + l] = color_1
+                if self.variant == 0:
+                    r = randint(0, 25)
+                    if _pass == 1 or r >= 3:
+                        led_data[(strip * self.driver.leds) + l] = [0,0,0]
                     else:
-                        led_data[(strip * self.driver.leds) + l] = color_2
+                        if r % 2 == 0:
+                            led_data[(strip * self.driver.leds) + l] = color_1
+                        else:
+                            led_data[(strip * self.driver.leds) + l] = color_2
+                elif self.variant == 1:
+                    r = randint(0, 50)
+                    if _pass == 1 or r >= 3:
+                        pass # led_data[(strip * self.driver.leds) + l] = [0,0,0]
+                    else:
+                        led_data[(strip * self.driver.leds) + l] = color_1
 
             if self.driver.strips == 8:
                 if strip == self.driver.strips - 1 and step > 0:
                     step = -1
                     _pass = (_pass + 1) % 2
+                    strip = 8
                 if strip == 0 and step < 0:
                     _pass = (_pass + 1) % 2
                     step = 1
-                    color = self.get_next_color()
-                    hue = self.fader_value(self.FADER_HUE)
-                    color_1 = shift_color(color, hue)
-                    color_2 = shift_color(color, -hue)
+                    strip = -1
+                    if self.variant == 0:
+                        color = self.get_next_color()
+                        hue = self.fader_value(self.FADER_HUE)
+                        color_1 = shift_color(color, hue)
+                        color_2 = shift_color(color, -hue)
             else:
                 if strip == self.driver.strips - 1:
-                    color = hue_to_rgb(hue)
-                    hue_shift = self.fader_value(self.FADER_HUE)
-                    color_1 = shift_color(color, hue_shift)
-                    color_2 = shift_color(color, -hue_shift)
-                    _pass = (_pass + 1) % 2
-                    hue = fmod(hue + hue_increment, 1.0)
+                    if self.variant == 0:
+                        color = hue_to_rgb(hue)
+                        hue_shift = self.fader_value(self.FADER_HUE)
+                        color_1 = shift_color(color, hue_shift)
+                        color_2 = shift_color(color, -hue_shift)
+                        _pass = (_pass + 1) % 2
+                        hue = fmod(hue + hue_increment, 1.0)
 
             instant = self.get_instant_color()
-            if instant is not None:
+            if self.variant != 0 and instant is not None:
                 hue_shift = self.fader_value(self.FADER_HUE)
                 color = instant
                 color_1 = shift_color(color, hue_shift)

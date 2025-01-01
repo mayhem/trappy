@@ -6,21 +6,9 @@ from time import sleep, monotonic
 
 from gradient import Gradient
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
-from color import hue_to_rgb, random_color
+from color import hue_to_rgb, random_color, shift_color, opposite_color, tri_color
 
 # new pattern idea: dont sweep in even spreads, sweep in randomly, even for each sweep.
-
-def shift_color(color, shift):
-    h, s, v = rgb_to_hsv(color[0] / 255, color[1] / 255, color[2] / 255)
-    h = fmod(h + shift + 1.0, 1.0)
-    r, g, b = hsv_to_rgb(h, s, v)
-    return (int(255 * r), int(255 * g), int(255 * b))
-
-def opposite_color(color):
-    return shift_color(color, .5)
-
-def tri_color(color):
-    return shift_color(color, .33333), shift_color(color, .66666)
 
 class EffectRainbowSweep(Effect):
 
