@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
-from color import hue_to_rgb
+from color import hue_to_rgb, shift_color
 from copy import copy
 from random import random
 from time import sleep, monotonic
@@ -61,6 +61,7 @@ class APCMiniMk2Controller(Thread):
         self.custom_colors[3] = hue_to_rgb(hue + .3, value=.7)
         self.saturation = 1.0
         self.value = 1.0
+        self.hue_shift = 1.0
         self._exit = False
         self.blinker = Blinker(self)
         self.blinker.start()
@@ -117,6 +118,10 @@ class APCMiniMk2Controller(Thread):
         for i in self.SCREENS:
             self.scene_on(self.SCREENS[i])
 
+    def update_custom_colors(self):
+        for i, col in enumerate(self.custom_colors):
+            shifted = shift_color(col, self.hue_shift)
+            self.set_pad_color(i, shifted)
 
     def set_active_faders(self, faders):
         self.active_faders = faders
@@ -172,8 +177,7 @@ class APCMiniMk2Controller(Thread):
 
         self.send_pad_msgs(pad_msg)
 
-        for i, col in enumerate(self.custom_colors):
-            self.set_pad_color(i, col)
+        self.update_custom_colors()
 
         self.colors = colors
 
@@ -181,6 +185,7 @@ class APCMiniMk2Controller(Thread):
         self.tracks_clear_all()
         self.track_on(0)
         self.track_on(1)
+        self.track_on(2)
 
 
     def setup_scene_screen(self):
@@ -359,7 +364,7 @@ class APCMiniMk2Controller(Thread):
         colors = []
         for col in self.custom_colors:
             if col != (0,0,0):
-                colors.append(col)
+                colors.append(shift_color(col, self.hue_shift))
 
         # Note: This could send events for effects that do not exist!
         self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
@@ -372,14 +377,6 @@ class APCMiniMk2Controller(Thread):
         # the column determines the effect, the row the variant
         effect = col
         variant = row
-
-        colors = []
-        for col in self.custom_colors:
-            if col != (0,0,0):
-                colors.append(col)
-
-        # Note: This could send events for effects that do not exist!
-        self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
 
 
     def run(self):
@@ -407,7 +404,9 @@ class APCMiniMk2Controller(Thread):
 
                 # track press
                 if m[0][1] >= 100 and m[0][1] <= 107:
-                    track = m[0][1]
+                    track = m[0][1] - 100
+                    if track == 2:
+                        self.update_custom_colors()
                     continue
 
                 # shift press
@@ -437,11 +436,12 @@ class APCMiniMk2Controller(Thread):
                     # did we press a custom color button?
                     if pad < 8:
                         if self.blinker.is_blinking(pad):
+                            # Set the color according to the hue/value sliders
                             color = self.blinker.get_blink_color(pad)
                             self.blinker.unblink(pad, color)
-                            self.custom_colors[pad] = color
+                            self.custom_colors[pad] = shift_color(color, self.hue_shift)
                         else:
-                            self.blinker.blink(pad, self.custom_colors[pad])
+                            self.blinker.blink(pad, shift_color(self.custom_colors[pad], self.hue_shift))
                         continue
 
                     # If it is a regular button and we have blinking buttons, assign it/them
@@ -449,7 +449,7 @@ class APCMiniMk2Controller(Thread):
                     if blinking:
                         for bpad in blinking:
                             self.blinker.unblink(bpad, self.colors[pad])
-                            self.custom_colors[bpad] = self.colors[pad][:3]
+                            self.custom_colors[bpad] = shift_color(self.colors[pad], self.hue_shift)
                             continue
                     else:
                         self.queue.put(InstantColorEvent(self.colors[pad][:3]))
@@ -486,7 +486,7 @@ class APCMiniMk2Controller(Thread):
                         self.saturation = m[0][2] / 127.0
                         blinking = self.blinker.get_blinking()
                         for bpad in blinking:
-                            self.update_color(bpad, self.custom_colors[bpad])
+                            self.update_color(bpad, shift_color(self.custom_colors[bpad], self.hue_shift))
                         continue
                             
                     # Value
@@ -494,8 +494,12 @@ class APCMiniMk2Controller(Thread):
                         self.value = m[0][2] / 127.0
                         blinking = self.blinker.get_blinking()
                         for bpad in blinking:
-                            self.update_color(bpad, self.custom_colors[bpad])
+                            self.update_color(bpad, shift_color(self.custom_colors[bpad], self.hue_shift))
                         continue
+
+                    # Hue shift
+                    if fader == 50:
+                        self.hue_shift = m[0][2] / 127.0
 
                 if self.screen == self.SCREENS["scene"]:
                     # brightness
@@ -510,11 +514,11 @@ class APCMiniMk2Controller(Thread):
                         self.queue.put(SpeedEvent(value))
                         continue
 
-                # General fader, passed to effect
-                if fader >= 50 and fader <= 56:
-                    # calculate 0 - 1.0
-                    self.queue.put(FaderEvent(fader - 48, value))
-                    continue
+                    # General fader, passed to effect
+                    if fader >= 50 and fader <= 56:
+                        # calculate 0 - 1.0
+                        self.queue.put(FaderEvent(fader - 48, value))
+                        continue
 
                 continue
 
