@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
+from color import hue_to_rgb
 from copy import copy
+from random import random
 from time import sleep, monotonic
 from threading import Thread, Lock
 import json
@@ -51,10 +53,11 @@ class APCMiniMk2Controller(Thread):
         self.lock = Lock()
         self.colors = []
         self.custom_colors = [ (0,0,0) for i in range(8) ]
-        self.custom_colors[0] = (255, 0, 0)
-        self.custom_colors[1] = (255, 0, 255)
-        self.custom_colors[2] = (255, 120, 0)
-        self.custom_colors[3] = (0, 120, 255)
+        hue = random()
+        self.custom_colors[0] = hue_to_rgb(hue)
+        self.custom_colors[1] = hue_to_rgb(hue + .1, value=.9)
+        self.custom_colors[2] = hue_to_rgb(hue + .2, value=.8)
+        self.custom_colors[3] = hue_to_rgb(hue + .3, value=.7)
         self.saturation = 1.0
         self.value = 1.0
         self._exit = False
@@ -156,6 +159,12 @@ class APCMiniMk2Controller(Thread):
 
         self.colors = colors
 
+        # set the faders
+        self.tracks_clear_all()
+        self.track_on(0)
+        self.track_on(1)
+
+
     def setup_scene_screen(self):
 
         pad_msg = []
@@ -186,6 +195,10 @@ class APCMiniMk2Controller(Thread):
 
         self.send_pad_msgs(pad_msg)
 
+        # set the faders
+        self.tracks_clear_all()
+        self.track_on(0)
+
     def setup_bookmark_screen(self):
 
         bookmarks = [ [[0,0,0], None] for i in range(self.NUM_BOOKMARKS + 1) ]
@@ -206,6 +219,8 @@ class APCMiniMk2Controller(Thread):
         pad_msg = [x for xs in pad_msg for x in xs]
 
         self.send_pad_msgs(pad_msg)
+        self.tracks_clear_all()
+
 
     def send_pad_msgs(self, pad_msg):
    
@@ -346,14 +361,20 @@ class APCMiniMk2Controller(Thread):
 
         # Note: This could send events for effects that do not exist!
         self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
-    
-    def run(self):
 
-        # indicate that the first 4 faders do stuff
-        self.track_on(0)
-        self.track_on(1)
-        self.track_on(2)
-        self.track_on(3)
+
+    def enable_faders(self, faders):
+        for f in faders:
+            if f in [0,1,2,3]:
+                raise ValueError("Faders must be between 2 and 8.")
+
+        for f in range(2, 9):
+            if f in faders:
+                self.apc.track_on(f)
+            else:
+                self.apc.track_clear(f)
+
+    def run(self):
 
         current_track = None
         key_down_time = None

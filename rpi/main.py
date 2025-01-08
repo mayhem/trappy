@@ -128,17 +128,8 @@ class Trappy:
 
                         self.current_effect = new_effect
                         current_effect_index = event.effect
-                        faders = self.current_effect.get_active_faders()
-                        for f in faders:
-                            if f in [0,1,2,3]:
-                                raise ValueError("Faders must be between 4 and 8.")
 
-                        for f in range(4, 9):
-                            if f in faders:
-                                self.apc.track_on(f)
-                            else:
-                                self.apc.track_clear(f)
-
+                        self.apc.enable_faders(self.current_effect.get_active_faders())
                         self.current_effect.start()
 
                     continue
