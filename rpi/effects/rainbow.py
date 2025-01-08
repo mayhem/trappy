@@ -13,7 +13,7 @@ from color import hue_to_rgb, random_color, shift_color, opposite_color, tri_col
 class EffectRainbowSweep(Effect):
 
     SLUG = "rainbow-sweep"
-    FADER_SEGMENTS = 4
+    FADER_SEGMENTS = 2
     FADE_CONSTANT = .85
     SEGMENTS = [4, 6, 12, 18, 24, 48]
     VARIANTS = 5

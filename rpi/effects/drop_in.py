@@ -11,8 +11,8 @@ from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 class EffectChasingDots(ParticleSystem):
 
     SLUG = "drop-in"
-    FADER_COUNT = 4
-    FADER_SPRITE = 5
+    FADER_COUNT = 2
+    FADER_SPRITE = 3
     MAX_PARTICLE_COUNT = 8
     VARIANTS = 3
 

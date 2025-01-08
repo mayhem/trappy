@@ -44,6 +44,7 @@ class APCMiniMk2ControllerWatchdog(Thread):
 class APCMiniMk2Controller(Thread):
 
     NUM_BOOKMARKS = 63
+    SCREENS = {"hue": 0, "scene": 1, "bookmark": 2 }
 
     def __init__(self, queue, effect_variants):
         Thread.__init__(self)
@@ -64,6 +65,7 @@ class APCMiniMk2Controller(Thread):
         self.blinker = Blinker(self)
         self.blinker.start()
         self.fader_values = [ 1.0, 1.0, .5, .5, .5, .5, .5, .5, .5 ]
+        self.active_faders = []
         self.direction = DirectionEvent.OUTWARD
         self.key_down_time = None
         self.effect_variants = effect_variants
@@ -110,27 +112,43 @@ class APCMiniMk2Controller(Thread):
         self.scenes_clear_all()
         self.tracks_clear_all()
 
-        self.screen = 0
-        self.num_screens = 3
+        self.screen = self.SCREENS["hue"]
         self.update_screen(0)
-        for i in range(self.num_screens):
-            self.scene_on(i)
+        for i in self.SCREENS:
+            self.scene_on(self.SCREENS[i])
+
+
+    def set_active_faders(self, faders):
+        self.active_faders = faders
+
+
+    def enable_faders(self):
+        for f in self.active_faders:
+            if f in [0,1]:
+                raise ValueError("Faders must be between 2 and 8.")
+
+        for f in range(2, 9):
+            if f in self.active_faders:
+                self.track_on(f)
+            else:
+                self.track_clear(f)
 
     def update_screen(self, screen):
 
-        if screen < 0 or screen > self.num_screens:
+        if screen < 0 or screen > len(self.SCREENS):
             return
 
         self.screen = screen
-        if self.screen == 0:
+        if self.screen == self.SCREENS["hue"]:
             self.setup_hue_screen()
             return
 
-        if self.screen == 1:
+        if self.screen == self.SCREENS["scene"]:
             self.setup_scene_screen()
+            self.enable_faders()
             return
 
-        if self.screen == 2:
+        if self.screen == self.SCREENS["bookmark"]:
             self.setup_bookmark_screen()
             return
 
@@ -198,6 +216,7 @@ class APCMiniMk2Controller(Thread):
         # set the faders
         self.tracks_clear_all()
         self.track_on(0)
+        self.track_on(1)
 
     def setup_bookmark_screen(self):
 
@@ -363,17 +382,6 @@ class APCMiniMk2Controller(Thread):
         self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
 
 
-    def enable_faders(self, faders):
-        for f in faders:
-            if f in [0,1,2,3]:
-                raise ValueError("Faders must be between 2 and 8.")
-
-        for f in range(2, 9):
-            if f in faders:
-                self.track_on(f)
-            else:
-                self.track_clear(f)
-
     def run(self):
 
         current_track = None
@@ -412,11 +420,11 @@ class APCMiniMk2Controller(Thread):
                 if m[0][1] >= 0 and m[0][1] <= 63:
                     pad = m[0][1]
 
-                    if self.screen == 1:
+                    if self.screen == self.SCREENS["scene"]:
                         self.handle_effect_pad_press(pad)
                         continue
 
-                    if self.screen == 2:
+                    if self.screen == self.SCREENS["bookmark"]:
                         self.handle_bookmark_pad_press(pad)
                         continue
 
@@ -472,36 +480,38 @@ class APCMiniMk2Controller(Thread):
                 value = m[0][2] / 127.0
                 self.fader_values[fader - 48] = value
 
-                # Saturation
-                if fader == 48:
-                    self.saturation = m[0][2] / 127.0
-                    blinking = self.blinker.get_blinking()
-                    for bpad in blinking:
-                        self.update_color(bpad, self.custom_colors[bpad])
-                    continue
-                        
-                # Value
-                if fader == 49:
-                    self.value = m[0][2] / 127.0
-                    blinking = self.blinker.get_blinking()
-                    for bpad in blinking:
-                        self.update_color(bpad, self.custom_colors[bpad])
-                    continue
+                if self.screen == self.SCREENS["hue"]:
+                    # Saturation
+                    if fader == 48:
+                        self.saturation = m[0][2] / 127.0
+                        blinking = self.blinker.get_blinking()
+                        for bpad in blinking:
+                            self.update_color(bpad, self.custom_colors[bpad])
+                        continue
+                            
+                    # Value
+                    if fader == 49:
+                        self.value = m[0][2] / 127.0
+                        blinking = self.blinker.get_blinking()
+                        for bpad in blinking:
+                            self.update_color(bpad, self.custom_colors[bpad])
+                        continue
 
-                # brightness
-                if fader == 50:
-                    value = m[0][2] / 127.0
-                    self.queue.put(BrightnessEvent(value))
-                    continue
-           
-                # speed
-                if fader == 51:
-                    value = m[0][2] / 127.0
-                    self.queue.put(SpeedEvent(value))
-                    continue
+                if self.screen == self.SCREENS["scene"]:
+                    # brightness
+                    if fader == 48:
+                        value = m[0][2] / 127.0
+                        self.queue.put(BrightnessEvent(value))
+                        continue
+               
+                    # speed
+                    if fader == 49:
+                        value = m[0][2] / 127.0
+                        self.queue.put(SpeedEvent(value))
+                        continue
 
                 # General fader, passed to effect
-                if fader >= 52 and fader <= 56:
+                if fader >= 50 and fader <= 56:
                     # calculate 0 - 1.0
                     self.queue.put(FaderEvent(fader - 48, value))
                     continue

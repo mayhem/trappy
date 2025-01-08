@@ -130,7 +130,8 @@ class Trappy:
                         self.current_effect = new_effect
                         current_effect_index = event.effect
 
-                        self.apc.enable_faders(self.current_effect.get_active_faders())
+                        self.apc.set_active_faders(self.current_effect.get_active_faders())
+                        self.apc.enable_faders()
                         self.current_effect.start()
 
                     continue

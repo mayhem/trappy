@@ -13,7 +13,7 @@ from color import hue_to_rgb, rgb_to_hue, random_color, shift_color
 class EffectSweep(Effect):
 
     SLUG = "sweep"
-    FADER_HUE = 4
+    FADER_HUE = 2
     FADE_CONSTANT = 1.0
     VARIANTS = 1
 
