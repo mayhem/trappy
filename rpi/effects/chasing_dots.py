@@ -70,19 +70,28 @@ class EffectChasingDots(ParticleSystem):
                 if skip_count == 0:
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                    if self.direction == 1:
+                        self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                    else:
+                        self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), self.driver.leds - 1, velocity, sprite))
                 skip_count -= 1
 
             elif self.variant == 1:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
+                    if self.direction == 1:
+                        self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
+                    else:
+                        self.particles.append(Particle(t, Particle.STRIP_ALL, None, self.driver.leds - 1, velocity, sprite))
                 else:
                     strips = [ x for x in range(self.driver.strips)]
                     shuffle(strips)
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
-                        self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                        if self.direction == 1:
+                            self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                        else:
+                            self.particles.append(Particle(t, s, self.get_next_color(), self.driver.leds - 1, velocity, sprite))
             else:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
@@ -93,7 +102,6 @@ class EffectChasingDots(ParticleSystem):
                     self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, -velocity, sprite))
 
                 self.detect_collisions(t)
-
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
