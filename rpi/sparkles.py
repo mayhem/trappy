@@ -14,7 +14,7 @@ class EffectSparkles(Effect):
     SLUG = "sparkles"
     FADER_NUM_DOTS = 4
     FADER_FADE = 5
-    FADE_CONSTANT = .85
+    FADE_CONSTANT = 1.0
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -38,6 +38,8 @@ class EffectSparkles(Effect):
 
     def run(self):
 
+        self.set_sleep_params(0.0, .2)
+
         led_data = [ list([0,0,0]) for x in range(self.driver.strips * self.driver.leds) ]
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
@@ -60,6 +62,5 @@ class EffectSparkles(Effect):
             for s in strips[:num_dots]:
                 led = randint(0, self.driver.leds-1)
                 led_data[(self.driver.leds * s) + led] = self.get_next_color()
-
-            self.driver.set(led_data)
-            self.sleep()
+                self.driver.set(led_data)
+                self.sleep(partial=num_dots)

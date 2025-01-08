@@ -48,6 +48,8 @@ class EffectGradientScroller(Effect):
 
     def run(self):
 
+        self.set_sleep_params(0.0, .2)
+
         shift_dist = .02
         spacing = self.fader_value(self.FADER_SPACING)
         offset = -spacing

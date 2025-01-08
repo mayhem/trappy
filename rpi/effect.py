@@ -32,10 +32,19 @@ class Effect(Thread):
             self.faders.append(self.map_fader_value(fader, value))
 
         self.instant_color_queue = Queue()
+        self.max_delay = .1
+        self.min_delay = 0.0
 
     def exit(self):
         self.stop = True
         self.join()
+
+    def set_sleep_params(self, min_delay, max_delay):
+        if min_delay < 0 or min_delay > max_delay or max_delay < 0:
+            return
+
+        self.min_delay = min_delay
+        self.max_delay = max_delay
 
     def accept_event(self, event):
         if isinstance(event, SpeedEvent):
@@ -117,7 +126,8 @@ class Effect(Thread):
         self.lock.release()
         return v
 
-    def sleep(self):
+    def sleep(self, partial=None):
+        """ Partial is used to break a sleep cycle into a partial number of cycles """
         while True:
             speed = self.speed
             if speed == 0:
@@ -126,8 +136,9 @@ class Effect(Thread):
 
             break
 
-        max_delay = .1
-        delay = (1.0 - speed) * max_delay
+        delay = (self.min_delay + ((self.max_delay - self.min_delay) * (1.0 - speed)))
+        if partial is not None:
+            delay /= partial
         sleep(delay)
 
     @property
