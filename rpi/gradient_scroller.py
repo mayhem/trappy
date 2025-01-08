@@ -10,6 +10,7 @@ from color import hue_to_rgb, random_color
 
 class EffectGradientScroller(Effect):
 
+    SLUG = "gradient-scroller"
     FADER_SPACING = 4
     SPACING_RANGE_MIN = .025
     SPACING_RANGE_MAX = .5 - SPACING_RANGE_MIN

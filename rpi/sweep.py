@@ -12,6 +12,7 @@ from color import hue_to_rgb, rgb_to_hue, random_color, shift_color
 # Too tired to finish the radar effect, will need to go back when fresh
 class EffectSweep(Effect):
 
+    SLUG = "sweep"
     FADER_HUE = 4
     FADE_CONSTANT = 1.0
     VARIANTS = 1

@@ -41,6 +41,8 @@ class APCMiniMk2ControllerWatchdog(Thread):
 
 class APCMiniMk2Controller(Thread):
 
+    NUM_BOOKMARKS = 63
+
     def __init__(self, queue, effect_variants):
         Thread.__init__(self)
 
@@ -106,7 +108,7 @@ class APCMiniMk2Controller(Thread):
         self.tracks_clear_all()
 
         self.screen = 0
-        self.num_screens = 2
+        self.num_screens = 3
         self.update_screen(0)
         for i in range(self.num_screens):
             self.scene_on(i)
@@ -123,6 +125,10 @@ class APCMiniMk2Controller(Thread):
 
         if self.screen == 1:
             self.setup_scene_screen()
+            return
+
+        if self.screen == 2:
+            self.setup_bookmark_screen()
             return
 
 
@@ -155,8 +161,6 @@ class APCMiniMk2Controller(Thread):
         pad_msg = []
 
         hue = 0.0
-        pad = 0
-
         for col in range(8):
             try:
                 num_sub_effects = self.effect_variants[col]
@@ -182,8 +186,29 @@ class APCMiniMk2Controller(Thread):
 
         self.send_pad_msgs(pad_msg)
 
-    def send_pad_msgs(self, pad_msg):
+    def setup_bookmark_screen(self):
 
+        bookmarks = [ [[0,0,0], None] for i in range(self.NUM_BOOKMARKS + 1) ]
+        bookmarks[0][0] = (255, 255, 255)
+        row = 0
+        col = 0
+        pad_msg = []
+        for bookmark in bookmarks:
+            color = bookmark[0]
+            pad = ((7 - row) * 8) + col
+            pad_msg.append([pad, pad, color[0] >> 7, color[0] & 0x7F, color[1] >> 7, color[1] & 0x7F, color[2] >> 7, color[2] & 0x7F])
+            col += 1
+            if col == 8:
+                col = 0
+                row += 1
+
+        pad_msg = sorted(pad_msg, key=lambda a: a[0])
+        pad_msg = [x for xs in pad_msg for x in xs]
+
+        self.send_pad_msgs(pad_msg)
+
+    def send_pad_msgs(self, pad_msg):
+   
         num_bytes = len(pad_msg) // 2
 
         msg = [0xF0, 0x47, 0x7F, 0x4F, 0x24]
@@ -288,7 +313,24 @@ class APCMiniMk2Controller(Thread):
         new_color = (int(r * 255),int(g * 255),int(b * 255))
         self.blinker.update_blink_color(pad, new_color)
 
-    def handle_scene_pad_press(self, pad):
+    def handle_effect_pad_press(self, pad):
+
+        row = 7 - (pad // 8)
+        col = pad - ((7 - row) * 8)
+
+        # the column determines the effect, the row the variant
+        effect = col
+        variant = row
+
+        colors = []
+        for col in self.custom_colors:
+            if col != (0,0,0):
+                colors.append(col)
+
+        # Note: This could send events for effects that do not exist!
+        self.queue.put(EffectEvent(effect, variant, color_values=colors, fader_values=self.fader_values))
+
+    def handle_bookmark_pad_press(self, pad):
 
         row = 7 - (pad // 8)
         col = pad - ((7 - row) * 8)
@@ -350,7 +392,11 @@ class APCMiniMk2Controller(Thread):
                     pad = m[0][1]
 
                     if self.screen == 1:
-                        self.handle_scene_pad_press(pad)
+                        self.handle_effect_pad_press(pad)
+                        continue
+
+                    if self.screen == 2:
+                        self.handle_bookmark_pad_press(pad)
                         continue
 
                     # Check to see if this is a long press

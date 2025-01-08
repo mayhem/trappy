@@ -11,6 +11,7 @@ class Effect(Thread):
     FADER_BRIGHTNESS = 2
     FADER_SPEED = 3
     VARIANTS = 1
+    SLUG = "__base"
 
     def __init__(self, driver, event, apc=None, timeout=None):
         Thread.__init__(self)

@@ -11,6 +11,7 @@ from color import hue_to_rgb, random_color
 
 class EffectSparkles(Effect):
 
+    SLUG = "sparkles"
     FADER_NUM_DOTS = 4
     FADER_FADE = 5
     FADE_CONSTANT = .85

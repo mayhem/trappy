@@ -13,6 +13,7 @@ class EffectChasingDots(ParticleSystem):
     FADER_COUNT = 4
     FADER_SPRITE = 5
     MAX_PARTICLE_COUNT = 8
+    SLUG = "chasing-dots"
     VARIANTS = 3
 
     def __init__(self, driver, event, apc = None, timeout=None):
