@@ -12,7 +12,7 @@ class EffectChasingDots(ParticleSystem):
 
     FADER_COUNT = 2
     FADER_SPRITE = 3
-    MAX_PARTICLE_COUNT = 8
+    MAX_PARTICLE_COUNT = 12
     SLUG = "chasing-dots"
     VARIANTS = 3
 
@@ -67,6 +67,13 @@ class EffectChasingDots(ParticleSystem):
             sprite = int(self.fader_value(self.FADER_SPRITE))
 
             if self.variant == 0:
+                if skip_count == 0:
+                    skip_count = self.MAX_PARTICLE_COUNT - count + 1
+                    velocity = 1 + randint(2, 6)
+                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                skip_count -= 1
+
+            elif self.variant == 1:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
                     self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
@@ -76,9 +83,7 @@ class EffectChasingDots(ParticleSystem):
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
                         self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
-
-            elif self.variant == 1:
-
+            else:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
                 for s in strips[:count]:
@@ -89,13 +94,6 @@ class EffectChasingDots(ParticleSystem):
 
                 self.detect_collisions(t)
 
-            else:
-                if skip_count == 0:
-                    skip_count = count
-                    velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
-
-                skip_count -= 1
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
