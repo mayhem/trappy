@@ -370,9 +370,9 @@ class APCMiniMk2Controller(Thread):
 
         for f in range(2, 9):
             if f in faders:
-                self.apc.track_on(f)
+                self.track_on(f)
             else:
-                self.apc.track_clear(f)
+                self.track_clear(f)
 
     def run(self):
 

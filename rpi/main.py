@@ -5,17 +5,18 @@ from queue import Queue
 from random import seed
 from time import sleep, monotonic
 
-from scroller import EffectScroller
-from gradient_scroller import EffectGradientScroller
-from chasing_dots import EffectChasingDots
-from sparkles import EffectSparkles
-from sweep import EffectSweep
-from spiral import EffectSpiral
-from rainbow import EffectRainbowSweep
-from pov import EffectPOV
 from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
 from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent, BrightnessEvent
+
+from effects.scroller import EffectScroller
+from effects.gradient_scroller import EffectGradientScroller
+from effects.chasing_dots import EffectChasingDots
+from effects.sparkles import EffectSparkles
+from effects.sweep import EffectSweep
+from effects.spiral import EffectSpiral
+from effects.rainbow import EffectRainbowSweep
+from effects.pov import EffectPOV
 
 class EventQueue:
     """ Similar to the Lock object, but previous duplicate events are dropped. """
