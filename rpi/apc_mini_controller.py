@@ -461,6 +461,7 @@ class APCMiniMk2Controller(Thread):
                     scene = m[0][1] - 112
                     if scene == 7:
                         reset_count += 1
+                        print("reset count %d" % reset_count)
                         if reset_count == 5:
                             os._exit(1)
                     else:

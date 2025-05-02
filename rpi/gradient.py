@@ -55,8 +55,7 @@ class Gradient(object):
 
                 return (max(min(new_color[0], 255), 0), max(min(new_color[1], 255), 0), max(min(new_color[2], 255), 0))
 
-        self.print_palette()
-        assert False
+        raise ValueError("Invalid point for gradient")
 
 class WeightedGradient(object):
 
@@ -93,5 +92,4 @@ class WeightedGradient(object):
                 ]
                 return (max(min(new_color[0], 255), 0), max(min(new_color[1], 255), 0), max(min(new_color[2], 255), 0))
 
-        print_palette()
-        assert False
+        raise ValueError("Invalid point for gradient")

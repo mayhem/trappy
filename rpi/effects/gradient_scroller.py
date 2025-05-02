@@ -65,8 +65,11 @@ class EffectGradientScroller(Effect):
             # Calculate the strip data once and save it
             strip_data = []
             for j in range(self.driver.leds):
-                col = g.get_color(float(j) / self.driver.leds)
-                strip_data.append(col)
+                try:
+                    col = g.get_color(float(j) / self.driver.leds)
+                    strip_data.append(col)
+                except ValueError:
+                    pass 
 
             buf = []
             for k in range(self.driver.strips):
