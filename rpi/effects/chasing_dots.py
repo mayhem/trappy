@@ -6,6 +6,7 @@ from particle_system import Particle, ParticleSystem
 from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
+from config import NUM_LEDS, NUM_STRIPS
 
 
 class EffectChasingDots(ParticleSystem):
@@ -14,7 +15,7 @@ class EffectChasingDots(ParticleSystem):
     FADER_SPRITE = 3
     MAX_PARTICLE_COUNT = 12
     SLUG = "chasing-dots"
-    VARIANTS = 3
+    VARIANTS = 4
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -96,7 +97,7 @@ class EffectChasingDots(ParticleSystem):
                             self.particles.append(Particle(t, self.get_next_color(), 0, s, velocity, 0.0, sprite))
                         else:
                             self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, s, velocity, 0.0, sprite))
-            else:
+            elif self.variant == 2:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
                 for s in strips[:count]:
@@ -104,8 +105,17 @@ class EffectChasingDots(ParticleSystem):
                     self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, velocity, 0.0, sprite))
                     velocity = 1 + randint(2, 6)
                     self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, -velocity, 0.0, sprite))
-
                 self.detect_collisions(t)
+
+            elif self.variant == 3:
+                if skip_count == 0:
+                    skip_count = self.MAX_PARTICLE_COUNT - count + 1
+                    velocity = 1 + randint(1, 3)
+                    if self.direction == 1:
+                        self.particles.append(Particle(t, self.get_next_color(), 0, 0, velocity, 0.0625, sprite))
+                    else:
+                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
+                skip_count -= 1
 
             self.driver.set(self.render_leds(t))
             t += self.direction 

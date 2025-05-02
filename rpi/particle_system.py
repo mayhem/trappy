@@ -22,7 +22,6 @@ class Particle:
         else:
             self.r_position = strip / NUM_STRIPS
         self.velocity = velocity
-        self.angle = angle
         self.r_velocity = r_velocity
         self.sprite_pattern = sprite_pattern
 
@@ -50,23 +49,27 @@ class ParticleSystem(Effect):
         still_alive = []
         for p in self.particles:
             is_alive = True
-            if p.position is None:
+            if p.r_position is None:
                 strips = list(range(NUM_STRIPS))
             else:
                 strips = [int(p.r_position * NUM_STRIPS)]
-            for strip in strips:
+            for s, strip in enumerate(strips):
                 pos = int(p.velocity * (t - p.t) + p.position)
                 if pos >= self.driver.leds or pos < 0:
                     is_alive = False
-                r_pos = fmod(p.r_velocity * (t - p.t) + p.r_position, 1.0)
+                if p.r_position is None:
+                    r_pos = s / NUM_STRIPS
+                else:
+                    r_pos = fmod(p.r_velocity * (t - p.t) + p.r_position, 1.0)
+                target = int(r_pos * NUM_STRIPS)
                 if is_alive:
                     color = self.get_next_color() if p.color is None else p.color
                     if p.sprite_pattern == 1:
-                        led_data[(strip * self.driver.leds) + pos] = color
+                        led_data[(target * self.driver.leds) + pos] = color
                     else:
                         for i in range(8):
                             if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                led_data[(strip * self.driver.leds) + pos + i] = color
+                                led_data[(target * self.driver.leds) + pos + i] = color
 
             if is_alive and not p.remove_after_next:
                 still_alive.append(p)
