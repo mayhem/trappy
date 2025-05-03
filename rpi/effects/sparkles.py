@@ -7,6 +7,7 @@ from threading import Lock
 from gradient import Gradient
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
+from config import NUM_LEDS, NUM_STRIPS
 
 
 class EffectSparkles(Effect):
@@ -37,13 +38,17 @@ class EffectSparkles(Effect):
 
         return None
 
-    def drop_out_content(self, led_data):
-        for led in range(NUM_LEDS):
+    def drop_out_content(self, led_data, direction):
+        for i, led in enumerate(range(NUM_LEDS)):
             for strip in range(NUM_STRIPS):
-                led_data.pop(strip * NUM_LEDS)
-                led_data.insert((strip + 1) - 1, (0,0,0))
-            self.driver.set(led_data)
-            sleep(.01)
+                if direction == 1:
+                    led_data.insert(strip * NUM_LEDS, (0,0,0))
+                    led_data.pop((strip * NUM_LEDS) + (NUM_LEDS-1))
+                else:
+                    led_data.pop(strip * NUM_LEDS)
+                    led_data.insert((strip * NUM_LEDS) + (NUM_LEDS-1), (0,0,0))
+            if i % 4 == 0:
+                self.driver.set(led_data)
 
         return led_data
 
@@ -53,6 +58,7 @@ class EffectSparkles(Effect):
 
         led_data = [ list([0,0,0]) for x in range(self.driver.strips * self.driver.leds) ]
         dot_count = 0
+        dropout_count = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -69,10 +75,12 @@ class EffectSparkles(Effect):
                     led_data[j] = color
 
             if self.variant == 1:
-                dots_before_clear = num_dots * 5
+                dots_before_clear = int(num_dots * 5000 * fade_constant / 255) 
+
                 if dot_count > dots_before_clear:
                     dot_count = 0;
-                    led_data = drop_out_content(led_data)
+                    led_data = self.drop_out_content(led_data, dropout_count % 2)
+                    dropout_count += 1
 
             # Add more sparkles
             strips = [ x for x in range(self.driver.strips)]
