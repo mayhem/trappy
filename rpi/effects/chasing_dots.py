@@ -6,6 +6,7 @@ from particle_system import Particle, ParticleSystem
 from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
+from config import NUM_LEDS, NUM_STRIPS
 
 
 class EffectChasingDots(ParticleSystem):
@@ -14,7 +15,7 @@ class EffectChasingDots(ParticleSystem):
     FADER_SPRITE = 3
     MAX_PARTICLE_COUNT = 12
     SLUG = "chasing-dots"
-    VARIANTS = 3
+    VARIANTS = 4
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
@@ -38,8 +39,12 @@ class EffectChasingDots(ParticleSystem):
         # Organize particles by strips 
         strips = [ [] for i in range(self.driver.strips) ]
         for p in self.particles:
-            for s in p.strips:
-                strips[s].append(p)
+            if p.r_position is None:
+                for s in range(NUM_STRIPS):
+                    strips[s].append(p)
+            else:
+                strip = int(p.r_position * NUM_STRIPS)
+                strips[strip].append(p)
 
         for strip in strips:
             for a, b in itertools.combinations(strip, 2):
@@ -50,12 +55,11 @@ class EffectChasingDots(ParticleSystem):
                    (a.velocity < 0 and b.velocity > 0 and a_pos <= b_pos):
                     is_alive = False
                     a.color = b.color = color
-                    a.remove_after_next = True
+                    a.remove_after_next = True 
                     b.remove_after_next = True
 
 
     def run(self):
-
         t = 0
         row = 0
         skip_count = 0
@@ -66,42 +70,52 @@ class EffectChasingDots(ParticleSystem):
             count = int(self.fader_value(self.FADER_COUNT))
             sprite = int(self.fader_value(self.FADER_SPRITE))
 
+            # t, color, position, strip, velcity, r_velo, sprite
             if self.variant == 0:
                 if skip_count == 0:
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(2, 6)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                        self.particles.append(Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
                     else:
-                        self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), self.driver.leds - 1, velocity, sprite))
+                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
                 skip_count -= 1
 
             elif self.variant == 1:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
+                        self.particles.append(Particle(t, None, 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
                     else:
-                        self.particles.append(Particle(t, Particle.STRIP_ALL, None, self.driver.leds - 1, velocity, sprite))
+                        self.particles.append(Particle(t, None, self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
                 else:
                     strips = [ x for x in range(self.driver.strips)]
                     shuffle(strips)
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
                         if self.direction == 1:
-                            self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                            self.particles.append(Particle(t, self.get_next_color(), 0, s, velocity, 0.0, sprite))
                         else:
-                            self.particles.append(Particle(t, s, self.get_next_color(), self.driver.leds - 1, velocity, sprite))
-            else:
+                            self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, s, velocity, 0.0, sprite))
+            elif self.variant == 2:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
                 for s in strips[:count]:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), 0, velocity, sprite))
+                    self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, velocity, 0.0, sprite))
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, -velocity, sprite))
-
+                    self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, -velocity, 0.0, sprite))
                 self.detect_collisions(t)
+
+            elif self.variant == 3:
+                if skip_count == 0:
+                    skip_count = self.MAX_PARTICLE_COUNT - count + 1
+                    velocity = 1 + randint(1, 3)
+                    if self.direction == 1:
+                        self.particles.append(Particle(t, self.get_next_color(), 0, 0, velocity, 0.0625, sprite))
+                    else:
+                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
+                skip_count -= 1
 
             self.driver.set(self.render_leds(t))
             t += self.direction 
