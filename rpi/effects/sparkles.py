@@ -38,15 +38,22 @@ class EffectSparkles(Effect):
 
         return None
 
-    def drop_out_content(self, led_data, direction):
+    def drop_out_content(self, led_data, mode):
+        if mode in (0, 1):
+            dir = mode
         for i, led in enumerate(range(NUM_LEDS)):
             for strip in range(NUM_STRIPS):
-                if direction == 1:
-                    led_data.insert(strip * NUM_LEDS, (0,0,0))
-                    led_data.pop((strip * NUM_LEDS) + (NUM_LEDS-1))
-                else:
+                if mode == 2:
+                    dir = strip % 2
+                if mode == 3:
+                    dir = strip < (NUM_STRIPS / 2)
+                if dir == 0:
                     led_data.pop(strip * NUM_LEDS)
                     led_data.insert((strip * NUM_LEDS) + (NUM_LEDS-1), (0,0,0))
+                elif dir == 1:
+                    led_data.insert(strip * NUM_LEDS, (0,0,0))
+                    led_data.pop((strip * NUM_LEDS) + (NUM_LEDS-1))
+
             if i % 4 == 0:
                 self.driver.set(led_data)
 
@@ -75,11 +82,11 @@ class EffectSparkles(Effect):
                     led_data[j] = color
 
             if self.variant == 1:
-                dots_before_clear = int(num_dots * 5000 * fade_constant / 255) 
+                dots_before_clear = int(num_dots * 4000 * fade_constant / 255) 
 
                 if dot_count > dots_before_clear:
                     dot_count = 0;
-                    led_data = self.drop_out_content(led_data, dropout_count % 2)
+                    led_data = self.drop_out_content(led_data, dropout_count % 4)
                     dropout_count += 1
 
             # Add more sparkles
