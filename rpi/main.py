@@ -67,8 +67,6 @@ class Trappy:
         self.effect_classes.append(EffectSweep)
         self.effect_classes.append(EffectRainbowSweep)
         self.effect_classes.append(EffectPOV)
-#        self.effect_classes.append(EffectScroller)
-        self.effect_classes.append(EffectSpiral)
 
         self.current_effect = None
 
