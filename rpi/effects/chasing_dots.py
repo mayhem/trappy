@@ -63,6 +63,7 @@ class EffectChasingDots(ParticleSystem):
         t = 0
         row = 0
         skip_count = 0
+        spin_offset = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -112,9 +113,10 @@ class EffectChasingDots(ParticleSystem):
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(1, 3)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, self.get_next_color(), 0, 0, velocity, 0.0625, sprite))
+                        self.particles.append(Particle(t, self.get_next_color(), 0, spin_offset, velocity, 0.0625, sprite))
                     else:
                         self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
+                    spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 
             self.driver.set(self.render_leds(t))
