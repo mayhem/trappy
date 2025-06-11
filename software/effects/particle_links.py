@@ -12,7 +12,8 @@ class EffectParticleLink(ParticleSystemRenderer):
     FADER_COUNT = 2
     FADER_SPRITE = 3
     SLUG = "particle-links"
-    VARIANTS = 4
+    VARIANTS = 1
+    MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)

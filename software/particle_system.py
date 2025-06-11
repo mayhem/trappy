@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
-from colorsys import hsv_to_rgb, hue_to_rgb
+from colorsys import hsv_to_rgb
+from color import hue_to_rgb
 import itertools
 from time import sleep, monotonic
 from math import fmod
@@ -49,17 +50,16 @@ class ParticleLink:
             raise ValueError("Cannot create particle link with particles of different strips (r_position).")
 
         match link_type:
-            case GRADIENT:
-                self.gradient = Gradient([ (0.0, (self.partcle0.color), 1.0, (self.particle1.color)) ])
+            case LinkType.GRADIENT:
+                self.gradient = Gradient([ (0.0, self.particle0.color), (1.0, self.particle1.color) ])
         
     def get_color(self, offset : float) -> tuple:
         match self.link_type:
-            case GRADIENT:
+            case LinkType.GRADIENT:
                 return self.gradient.get_color(offset)
-            case RAINBOW:
+            case LinkType.RAINBOW:
                 return hue_to_rgb(offset)
                 
-
 
 class ParticleSystemRenderer(Effect):
 
