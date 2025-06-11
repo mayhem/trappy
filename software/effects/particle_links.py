@@ -1,25 +1,21 @@
-from abc import abstractmethod
-import itertools
 from time import sleep, monotonic
 
-from particle_system import Particle, ParticleSystemRenderer
+from particle_system import Particle, ParticleSystemRenderer, ParticleLink, LinkType
 from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from config import NUM_LEDS, NUM_STRIPS
 
 
-class EffectChasingDots(ParticleSystemRenderer):
+class EffectParticleLink(ParticleSystemRenderer):
 
     FADER_COUNT = 2
     FADER_SPRITE = 3
-    MAX_PARTICLE_COUNT = 12
-    SLUG = "chasing-dots"
+    SLUG = "particle-links"
     VARIANTS = 4
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.particles = []
 
     def get_active_faders(self):
         return [ self.FADER_COUNT, self.FADER_SPRITE ]
@@ -33,33 +29,25 @@ class EffectChasingDots(ParticleSystemRenderer):
             return value * 254 + 1
 
         return None
-
-    def detect_collisions(self, t, color = (255, 255, 255)):
-
-        # Organize particles by strips 
-        strips = [ [] for i in range(self.driver.strips) ]
-        for p in self.particles:
-            if p.r_position is None:
-                for s in range(NUM_STRIPS):
-                    strips[s].append(p)
-            else:
-                strip = int(p.r_position * NUM_STRIPS)
-                strips[strip].append(p)
-
-        for strip in strips:
-            for a, b in itertools.combinations(strip, 2):
-                a_pos = int(a.velocity * (t - a.t) + a.position)
-                b_pos = int(b.velocity * (t - b.t) + b.position)
-
-                if (a.velocity > 0 and b.velocity < 0 and a_pos >= b_pos) or \
-                   (a.velocity < 0 and b.velocity > 0 and a_pos <= b_pos):
-                    is_alive = False
-                    a.color = b.color = color
-                    a.remove_after_next = True 
-                    b.remove_after_next = True
-
-
+    
     def run(self):
+
+        t = 0
+        p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        link = ParticleLink(p0, p1, LinkType.GRADIENT)
+        self.add_link(link)
+
+        while not self.stop:
+            if self.timeout is not None and monotonic() > self.timeout:
+                return
+            
+            self.driver.set(self.render_leds(t))
+            t += self.direction 
+
+            self.sleep()
+
+    def _run(self):
         t = 0
         row = 0
         skip_count = 0
