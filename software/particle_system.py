@@ -85,9 +85,19 @@ class ParticleSystemRenderer(Effect):
 
         still_alive = []
         for l in self.links:
-            start_pos = l.particle0.
+            start_pos = int(l.particle0.velocity * (t - l.particle0.t) + l.particle0.position)
+            end_pos = int(l.particle1.velocity * (t - l.particle1.t) + l.particle1.position)
+            step = 1.0 / (end_pos - start_pos)
+            leds = int((end_pos - start_pos) * NUM_LEDS)
             
-
+            if l.particle0.r_position is None:
+                strips = list(range(NUM_STRIPS))
+            else:
+                strips = [int(l.particle0.r_position * NUM_STRIPS)]
+            for s, strip in enumerate(strips):
+                for i, led in enumerate(range(leds)):
+                    offset = start_pos + (step * i)
+                    led_data[(strip * self.driver.leds) + led] = l.get_color(offset)
 
         for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
             is_alive = True
