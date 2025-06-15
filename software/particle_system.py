@@ -85,10 +85,13 @@ class ParticleSystemRenderer(Effect):
 
         still_alive = []
         for l in self.links:
-            start_pos = int(l.particle0.velocity * (t - l.particle0.t) + l.particle0.position)
-            end_pos = int(l.particle1.velocity * (t - l.particle1.t) + l.particle1.position)
+            start_pos = int((l.particle0.velocity * (t - l.particle0.t) + l.particle0.position) * NUM_LEDS)
+            end_pos = int((l.particle1.velocity * (t - l.particle1.t) + l.particle1.position) * NUM_LEDS)
             step = 1.0 / (end_pos - start_pos)
-            leds = int((end_pos - start_pos) * NUM_LEDS)
+            leds = (end_pos - start_pos) - 1
+            #print("start %d stop %d step: %.3f leds: %d" % (start_pos, end_pos, step, leds))
+            if leds < 1:
+                continue
             
             if l.particle0.r_position is None:
                 strips = list(range(NUM_STRIPS))

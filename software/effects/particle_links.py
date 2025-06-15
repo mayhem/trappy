@@ -12,7 +12,7 @@ class EffectParticleLink(ParticleSystemRenderer):
     FADER_COUNT = 2
     FADER_SPRITE = 3
     SLUG = "particle-links"
-    VARIANTS = 1
+    VARIANTS = 4
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
@@ -31,14 +31,9 @@ class EffectParticleLink(ParticleSystemRenderer):
 
         return None
     
-    def run(self):
+    def _run(self):
 
         t = 0
-        p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        link = ParticleLink(p0, p1, LinkType.GRADIENT)
-        self.add_link(link)
-
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -48,8 +43,13 @@ class EffectParticleLink(ParticleSystemRenderer):
 
             self.sleep()
 
-    def _run(self):
+    def run(self):
         t = 0
+        p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        link = ParticleLink(p0, p1, LinkType.GRADIENT)
+        self.add_link(link)
+
         row = 0
         skip_count = 0
         spin_offset = 0
