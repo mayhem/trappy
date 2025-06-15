@@ -131,7 +131,7 @@ class Effect(Thread):
         while True:
             speed = self.speed
             if speed == 0:
-                sleep(.01)
+#                sleep(.01)
                 continue
 
             break

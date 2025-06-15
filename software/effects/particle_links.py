@@ -1,4 +1,6 @@
 from time import sleep, monotonic
+import cProfile
+import pstats
 
 from particle_system import Particle, ParticleSystemRenderer, ParticleLink, LinkType
 from gradient import Gradient
@@ -44,11 +46,14 @@ class EffectParticleLink(ParticleSystemRenderer):
             self.sleep()
 
     def run(self):
+
+        profiler = cProfile.Profile()
+        profiler.enable()
         t = 0
         p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
         p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
         link = ParticleLink(p0, p1, LinkType.GRADIENT)
-        self.add_link(link)
+#        self.add_link(link)
 
         row = 0
         skip_count = 0
@@ -112,4 +117,7 @@ class EffectParticleLink(ParticleSystemRenderer):
             t += self.direction 
             row += 1
 
-            self.sleep()
+#            self.sleep()
+        profiler.disable()
+        stats = pstats.Stats(profiler)
+        stats.strip_dirs().sort_stats('time').print_stats(20)
