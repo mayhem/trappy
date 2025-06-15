@@ -3,6 +3,7 @@ from colorsys import hsv_to_rgb
 from queue import Queue
 from time import sleep, monotonic
 from threading import Lock
+import numpy as np
 
 from gradient import Gradient
 from random import random, randint
@@ -19,8 +20,7 @@ class GammaCorrector:
 
     def __init__(self):
         self.gamma = None
-        self.cur_table = []
-        self.lock = Lock()
+        self.lookup_table = np.zeros((256,), dtype=np.uint8)
 
     def set_gamma(self, gamma):
         if gamma == self.gamma:
@@ -30,21 +30,15 @@ class GammaCorrector:
         for i in range(256):
             table.append(int(255 * (i / 256) ** (3.5-gamma)))
 
-        self.lock.acquire()
         self.gamma = gamma
-        self.cur_table = table
-        self.lock.release()
+        self.lookup_table = table
+
+    @property
+    def table(self):
+        return self.lookup_table
 
     def gamma_correct(self, color):
-
-        if not self.cur_table:
-            self.calculate()
-
-        self.lock.acquire()
-        col = (self.cur_table[color[0]],self.cur_table[color[1]], self.cur_table[color[2]])
-        self.lock.release()
-
-        return col
+        return (self.lookup_table[color[0]],self.lookup_table[color[1]], self.lookup_table[color[2]])
 
 
 class EffectGammaCorrect(Effect):

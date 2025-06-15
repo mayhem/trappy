@@ -3,7 +3,6 @@ import itertools
 from time import sleep, monotonic
 
 from particle_system import Particle, ParticleSystemRenderer
-from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from config import NUM_LEDS, NUM_STRIPS

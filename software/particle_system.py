@@ -5,6 +5,7 @@ from color import hue_to_rgb
 import itertools
 from time import sleep, monotonic
 from math import fmod
+import numpy as np
 
 from gradient import Gradient
 from random import random, randint, shuffle
@@ -81,7 +82,8 @@ class ParticleSystemRenderer(Effect):
 
     def render_leds(self, t, background_color=(0,0,0)):
 
-        led_data = [ list(background_color) for x in range(self.driver.strips * self.driver.leds) ]
+#        led_data = [ list(background_color) for x in range(self.driver.strips * self.driver.leds) ]
+        led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
 
         still_alive = []
         for l in self.links:
@@ -100,7 +102,7 @@ class ParticleSystemRenderer(Effect):
             for s, strip in enumerate(strips):
                 for i, led in enumerate(range(leds)):
                     offset = start_pos + (step * i)
-                    led_data[(strip * self.driver.leds) + led] = l.get_color(offset)
+                    led_data[strip][led] = l.get_color(offset)
 
         for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
             is_alive = True
@@ -120,11 +122,11 @@ class ParticleSystemRenderer(Effect):
                 if is_alive:
                     color = self.get_next_color() if p.color is None else p.color
                     if p.sprite_pattern == 1:
-                        led_data[(target_strip * self.driver.leds) + pos] = color
+                        led_data[target_strip][pos] = color
                     else:
                         for i in range(8):
                             if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                led_data[(target_strip * self.driver.leds) + pos + i] = color
+                                led_data[target_strip][pos + i] = color
 
             if is_alive and not p.remove_after_next:
                 still_alive.append(p)

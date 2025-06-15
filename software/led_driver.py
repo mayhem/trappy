@@ -15,6 +15,7 @@ class LEDDriver:
 
         self.strips = NUM_STRIPS
         self.leds = NUM_LEDS
+        self.total_leds = self.strips * self.leds
         self.max_brightness = MAX_BRIGHTNESS
         self.min_brightness = MIN_BRIGHTNESS
 
@@ -77,6 +78,16 @@ class LEDDriver:
             if led == self.leds:
                 strip += 1
                 led = 0
+
+        smileds.leds_set(ba)
+        smileds.leds_send()
+
+    def set_np(self, buf, no_gamma=False):
+
+        ba = bytearray(buf.tobytes())
+        table = self.gamma_correct.table
+        for i in range(self.total_leds):
+            ba[i] = table[ba[i]]
 
         smileds.leds_set(ba)
         smileds.leds_send()

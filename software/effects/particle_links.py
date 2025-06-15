@@ -3,7 +3,6 @@ import cProfile
 import pstats
 
 from particle_system import Particle, ParticleSystemRenderer, ParticleLink, LinkType
-from gradient import Gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from config import NUM_LEDS, NUM_STRIPS
@@ -48,17 +47,20 @@ class EffectParticleLink(ParticleSystemRenderer):
     def run(self):
 
         profiler = cProfile.Profile()
-        profiler.enable()
+#        profiler.enable()
         t = 0
         p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
         p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
         link = ParticleLink(p0, p1, LinkType.GRADIENT)
-#        self.add_link(link)
+        self.add_link(link)
 
         row = 0
         skip_count = 0
         spin_offset = 0
+        frame = 0
+        total_time = 0.0
         while not self.stop:
+            t0 = monotonic()
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
@@ -113,11 +115,18 @@ class EffectParticleLink(ParticleSystemRenderer):
                     spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 
-            self.driver.set(self.render_leds(t))
+            self.driver.set_np(self.render_leds(t))
             t += self.direction 
             row += 1
-
 #            self.sleep()
-        profiler.disable()
-        stats = pstats.Stats(profiler)
-        stats.strip_dirs().sort_stats('time').print_stats(20)
+
+            total_time += monotonic() - t0
+            frame += 1
+            if frame == 10:
+                print("%.3fs" % (total_time / frame))
+                frame = 0
+                total_time = 0.0
+
+#        profiler.disable()
+#        stats = pstats.Stats(profiler)
+#        stats.strip_dirs().sort_stats('time').print_stats(20)

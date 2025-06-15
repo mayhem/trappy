@@ -4,7 +4,6 @@ from random import random, randint, shuffle
 from time import sleep, monotonic
 from threading import Lock
 
-from gradient import Gradient
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 from config import NUM_LEDS, NUM_STRIPS

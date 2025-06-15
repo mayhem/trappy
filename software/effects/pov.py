@@ -2,7 +2,6 @@ from abc import abstractmethod
 from colorsys import hsv_to_rgb
 from time import sleep, monotonic
 
-from gradient import Gradient
 from random import random, randint
 from effect import Effect, InstantColorEvent
 from color import hue_to_rgb, random_color

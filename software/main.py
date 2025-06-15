@@ -89,13 +89,13 @@ class Trappy:
     def run(self):
         current_effect_index = -1
         try:
-            print("main: wait for APC...")
-            while not self.apc.is_connected:
-                sleep(.1)
+#            print("main: wait for APC...")
+#            while not self.apc.is_connected:
+#                sleep(.1)
 
             print("main: starting")
 
-            while self.apc.is_connected:
+            while True: # self.apc.is_connected:
                 event = self.queue.get()
                 if not event:
                     continue

@@ -4,7 +4,6 @@ from math import fmod
 from random import random, randint, shuffle
 from time import sleep, monotonic
 
-from gradient import Gradient
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, rgb_to_hue, random_color, shift_color
 
