@@ -7,7 +7,7 @@ from time import sleep, monotonic
 from math import fmod
 import numpy as np
 
-from gradient import Gradient
+from gradient import create_gradient
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
@@ -52,14 +52,14 @@ class ParticleLink:
 
         match link_type:
             case LinkType.GRADIENT:
-                self.gradient = Gradient([ (0.0, self.particle0.color), (1.0, self.particle1.color) ])
+                self.gradient = create_gradient([ (0.0, self.particle0.color), (1.0, self.particle1.color) ])
         
-    def get_color(self, offset : float) -> tuple:
+    def get_color(self, led : int) -> tuple:
         match self.link_type:
             case LinkType.GRADIENT:
-                return self.gradient.get_color(offset)
+                return self.gradient[led]
             case LinkType.RAINBOW:
-                return hue_to_rgb(offset)
+                return hue_to_rgb(led / NUM_LEDS)
                 
 
 class ParticleSystemRenderer(Effect):
@@ -82,7 +82,6 @@ class ParticleSystemRenderer(Effect):
 
     def render_leds(self, t, background_color=(0,0,0)):
 
-#        led_data = [ list(background_color) for x in range(self.driver.strips * self.driver.leds) ]
         led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
 
         still_alive = []
@@ -102,7 +101,7 @@ class ParticleSystemRenderer(Effect):
             for s, strip in enumerate(strips):
                 for i, led in enumerate(range(leds)):
                     offset = start_pos + (step * i)
-                    led_data[strip][led] = l.get_color(offset)
+                    led_data[strip][led] = l.get_color(led)
 
         for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
             is_alive = True

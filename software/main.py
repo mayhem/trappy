@@ -9,7 +9,6 @@ from led_driver import LEDDriver
 from apc_mini_controller import APCMiniMk2Controller
 from effect import EffectEvent, SpeedEvent, GammaEvent, FaderEvent, DirectionEvent, BrightnessEvent
 
-from effects.scroller import EffectScroller
 from effects.gradient_scroller import EffectGradientScroller
 from effects.chasing_dots import EffectChasingDots
 from effects.sparkles import EffectSparkles
