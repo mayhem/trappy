@@ -26,6 +26,11 @@ class LEDDriver:
         self.gamma_correct.set_gamma(self.DEFAULT_GAMMA)
         self.last_8_threshold = 24 * self.leds
 
+        # for statistics calculation
+        self.total_time = 0
+        self.frame = 0
+        self.last_t0 = None
+
     def set_brightness(self, brightness):
         """
         Set the brightness. On a scale of 1 - 100. A value of 100
@@ -56,7 +61,18 @@ class LEDDriver:
         new_strip = 7 - (strip - 8)
         return self.last_8_threshold + ((new_strip * self.leds + led) * 3)
 
+    def time_frames(self):
+        if self.last_t0 is not None:
+            self.total_time += monotonic() - self.last_t0
+            self.frame += 1
+            if self.frame == 10:
+                print("%dms" % int(self.total_time / self.frame * 1000))
+                self.frame = 0
+                self.total_time = 0.0
+
     def set(self, buf, no_gamma=False):
+
+        self.time_frames()
         ba = bytearray([0,0,0] * self.strips * self.leds)
         led = 0
         strip = 0
@@ -82,8 +98,11 @@ class LEDDriver:
         smileds.leds_set(ba)
         smileds.leds_send()
 
+        self.last_t0 = monotonic()
+
     def set_np(self, buf, no_gamma=False):
 
+        self.time_frames()
         ba = bytearray(buf.tobytes())
         table = self.gamma_correct.table
         for i in range(self.total_leds):
@@ -91,3 +110,5 @@ class LEDDriver:
 
         smileds.leds_set(ba)
         smileds.leds_send()
+
+        self.last_t0 = monotonic()

@@ -2,7 +2,7 @@ from abc import abstractmethod
 from colorsys import hsv_to_rgb
 from time import monotonic
 
-from gradient import Gradient
+from gradient import create_gradient
 from random import random, randint
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
@@ -57,7 +57,7 @@ class EffectGradientScroller(Effect):
             self.current_colors.append(self.colors[self.color_index][:3])
             self.color_index = (self.color_index + 1) % len(self.colors)
 
-        g = Gradient(self.generate_palette(offset, spacing))
+        g = create_gradient(self.generate_palette(offset, spacing))
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -66,7 +66,7 @@ class EffectGradientScroller(Effect):
             strip_data = []
             for j in range(self.driver.leds):
                 try:
-                    col = g.get_color(float(j) / self.driver.leds)
+                    col = g[j]
                     strip_data.append(col)
                 except ValueError:
                     pass 
@@ -91,8 +91,7 @@ class EffectGradientScroller(Effect):
                 self.current_colors.append(self.get_next_color())
                 del self.current_colors[0]
 
-            g.palette = self.generate_palette(offset, spacing)
-
+            g = create_gradient(self.generate_palette(offset, spacing))
             self.sleep()
 
             spacing = self.fader_value(self.FADER_SPACING)

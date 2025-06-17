@@ -95,10 +95,9 @@ def create_gradient(palette):
             max(min(int(palette[index - 1][1][1] + ((palette[index][1][1] - palette[index - 1][1][1]) * percent)), 255), 0),
             max(min(int(palette[index - 1][1][2] + ((palette[index][1][2] - palette[index - 1][1][2]) * percent)), 255), 0)
         )
-        print("%d %.3f %d: (%d, %d, %d)" % (led, offset, index, gradient[led][0], gradient[led][1], gradient[led][2]))
+#        print("%d %.3f %d: (%d, %d, %d)" % (led, offset, index, gradient[led][0], gradient[led][1], gradient[led][2]))
         led += 1
         offset += step
-
 
     return gradient
 

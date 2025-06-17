@@ -128,6 +128,10 @@ class Effect(Thread):
 
     def sleep(self, partial=None):
         """ Partial is used to break a sleep cycle into a partial number of cycles """
+        # TODO: Remove after profiling
+        return
+
+
         while True:
             speed = self.speed
             if speed == 0:

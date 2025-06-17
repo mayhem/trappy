@@ -118,7 +118,7 @@ class EffectChasingDots(ParticleSystemRenderer):
                     spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 
-            self.driver.set(self.render_leds(t))
+            self.driver.set_np(self.render_leds(t))
             t += self.direction 
             row += 1
 

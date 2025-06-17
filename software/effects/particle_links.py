@@ -13,11 +13,13 @@ class EffectParticleLink(ParticleSystemRenderer):
     FADER_COUNT = 2
     FADER_SPRITE = 3
     SLUG = "particle-links"
-    VARIANTS = 4
+    VARIANTS = 5
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
+        self.profile = True
+        self.profiler = cProfile.Profile()
 
     def get_active_faders(self):
         return [ self.FADER_COUNT, self.FADER_SPRITE ]
@@ -44,23 +46,20 @@ class EffectParticleLink(ParticleSystemRenderer):
 
             self.sleep()
 
+
     def run(self):
 
-        profiler = cProfile.Profile()
-#        profiler.enable()
         t = 0
-        p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        link = ParticleLink(p0, p1, LinkType.GRADIENT)
-        self.add_link(link)
+        if self.variant == 0:
+            p0 = Particle(t, (0, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+            p1 = Particle(t, (128, 0, 128), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+            link = ParticleLink(p0, p1, LinkType.GRADIENT)
+            self.add_link(link)
 
         row = 0
         skip_count = 0
         spin_offset = 0
-        frame = 0
-        total_time = 0.0
         while not self.stop:
-            t0 = monotonic()
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
@@ -115,18 +114,23 @@ class EffectParticleLink(ParticleSystemRenderer):
                     spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 
-            self.driver.set_np(self.render_leds(t))
+            elif self.variant == 4:
+                if skip_count == 0:
+                    skip_count = self.MAX_PARTICLE_COUNT - count + 1
+                    velocity = 1
+                    self.particles.append(Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                skip_count -= 1
+
+            if self.profile:
+                self.profiler.enable()
+            tmp = self.render_leds(t)
+            if self.profile:
+                self.profiler.disable()
+            self.driver.set_np(tmp)
             t += self.direction 
             row += 1
 #            self.sleep()
 
-            total_time += monotonic() - t0
-            frame += 1
-            if frame == 10:
-                print("%.3fs" % (total_time / frame))
-                frame = 0
-                total_time = 0.0
-
-#        profiler.disable()
-#        stats = pstats.Stats(profiler)
-#        stats.strip_dirs().sort_stats('time').print_stats(20)
+        if self.profile:
+            stats = pstats.Stats(self.profiler)
+            stats.strip_dirs().sort_stats('cumulative').print_stats(20)

@@ -103,6 +103,7 @@ class ParticleSystemRenderer(Effect):
                     offset = start_pos + (step * i)
                     led_data[strip][led] = l.get_color(led)
 
+        print("%d particles" % len(self.particles))
         for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
             is_alive = True
             if p.r_position is None:
