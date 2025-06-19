@@ -76,35 +76,35 @@ class EffectChasingDots(ParticleSystemRenderer):
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(2, 6)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.add_particle(Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
                     else:
-                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
                 skip_count -= 1
 
             elif self.variant == 1:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, None, 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.add_particle(Particle(t, None, 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
                     else:
-                        self.particles.append(Particle(t, None, self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.add_particle(Particle(t, None, self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
                 else:
                     strips = [ x for x in range(self.driver.strips)]
                     shuffle(strips)
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
                         if self.direction == 1:
-                            self.particles.append(Particle(t, self.get_next_color(), 0, s, velocity, 0.0, sprite))
+                            self.add_particle(Particle(t, self.get_next_color(), 0, s, velocity, 0.0, sprite))
                         else:
-                            self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, s, velocity, 0.0, sprite))
+                            self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, s, velocity, 0.0, sprite))
             elif self.variant == 2:
                 strips = [ x for x in range(self.driver.strips)]
                 shuffle(strips)
                 for s in strips[:count]:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, velocity, 0.0, sprite))
+                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, velocity, 0.0, sprite))
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, -velocity, 0.0, sprite))
+                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, -velocity, 0.0, sprite))
                 self.detect_collisions(t)
 
             elif self.variant == 3:
@@ -112,9 +112,9 @@ class EffectChasingDots(ParticleSystemRenderer):
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(1, 3)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, self.get_next_color(), 0, spin_offset, velocity, 0.0625, sprite))
+                        self.add_particle(Particle(t, self.get_next_color(), 0, spin_offset, velocity, 0.0625, sprite))
                     else:
-                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
+                        self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
                     spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 

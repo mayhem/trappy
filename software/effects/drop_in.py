@@ -68,13 +68,13 @@ class EffectChasingDots(ParticleSystem):
             if self.variant == 0:
                 if count == self.driver.strips:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
+                    self.add_particle(Particle(t, Particle.STRIP_ALL, None, 0, velocity, sprite))
                 else:
                     strips = [ x for x in range(self.driver.strips)]
                     shuffle(strips)
                     for s in strips[:count]:
                         velocity = 1 + randint(2, 6)
-                        self.particles.append(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
+                        self.add_particle(Particle(t, s, self.get_next_color(), 0, velocity, sprite))
 
             elif self.variant == 1:
 
@@ -82,9 +82,9 @@ class EffectChasingDots(ParticleSystem):
                 shuffle(strips)
                 for s in strips[:count]:
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), 0, velocity, sprite))
+                    self.add_particle(Particle(t, s, self.get_next_color(ignore_odd_colors=True), 0, velocity, sprite))
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, s, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, -velocity, sprite))
+                    self.add_particle(Particle(t, s, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, -velocity, sprite))
 
                 self.detect_collisions(t)
 
@@ -92,7 +92,7 @@ class EffectChasingDots(ParticleSystem):
                 if skip_count == 0:
                     skip_count = count
                     velocity = 1 + randint(2, 6)
-                    self.particles.append(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
+                    self.add_particle(Particle(t, Particle.STRIP_ALL, self.get_next_color(), 0, velocity, sprite))
 
                 skip_count -= 1
 

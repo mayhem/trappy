@@ -5,6 +5,7 @@ from color import hue_to_rgb
 import itertools
 from time import sleep, monotonic
 from math import fmod
+from bisect import insort_left
 import numpy as np
 
 from gradient import create_gradient
@@ -70,10 +71,10 @@ class ParticleSystemRenderer(Effect):
         self.links = []
         
     def add_particle(self, particle):
-        self.particles.append(particle)
+        insort_left(self.particles, particle, key=lambda x: x.z_order)
 
     def add_link(self, link):
-        self.links.append(link)
+        insort_left(self.links, link, key=lambda x: x.particle0.z_order)
 
     def print_palette(self, palette):
         for pal in palette:
@@ -84,7 +85,6 @@ class ParticleSystemRenderer(Effect):
 
         led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
 
-        still_alive = []
         for l in self.links:
             start_pos = int((l.particle0.velocity * (t - l.particle0.t) + l.particle0.position) * NUM_LEDS)
             end_pos = int((l.particle1.velocity * (t - l.particle1.t) + l.particle1.position) * NUM_LEDS)
@@ -103,8 +103,7 @@ class ParticleSystemRenderer(Effect):
                     offset = start_pos + (step * i)
                     led_data[strip][led] = l.get_color(led)
 
-        print("%d particles" % len(self.particles))
-        for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
+        for particle_index, p in enumerate(self.particles):
             is_alive = True
             if p.r_position is None:
                 strips = list(range(NUM_STRIPS))
@@ -114,23 +113,22 @@ class ParticleSystemRenderer(Effect):
                 pos = int(p.velocity * (t - p.t) + p.position)
                 if pos >= self.driver.leds or pos < 0:
                     is_alive = False
-                if p.r_position is None:
-                    r_pos = s / NUM_STRIPS
                 else:
-                    r_pos = fmod(p.r_velocity * (t - p.t) + p.r_position, 1.0)
-                target_strip = int(r_pos * NUM_STRIPS)
-                if is_alive:
-                    color = self.get_next_color() if p.color is None else p.color
-                    if p.sprite_pattern == 1:
-                        led_data[target_strip][pos] = color
+                    if p.r_position is None:
+                        r_pos = s / NUM_STRIPS
                     else:
-                        for i in range(8):
-                            if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                led_data[target_strip][pos + i] = color
+                        r_pos = fmod(p.r_velocity * (t - p.t) + p.r_position, 1.0)
+                    target_strip = int(r_pos * NUM_STRIPS)
+                    if is_alive:
+                        color = self.get_next_color() if p.color is None else p.color
+                        if p.sprite_pattern == 1:
+                            led_data[target_strip][pos] = color
+                        else:
+                            for i in range(8):
+                                if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
+                                    led_data[target_strip][pos + i] = color
 
-            if is_alive and not p.remove_after_next:
-                still_alive.append(p)
-
-        self.particles = still_alive
+            if not is_alive or p.remove_after_next:
+                self.particles.pop(particle_index)
 
         return led_data
