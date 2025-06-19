@@ -51,8 +51,8 @@ class EffectParticleLink(ParticleSystemRenderer):
 
         t = 0
         if self.variant == 0:
-            p0 = Particle(t, (32, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-            p1 = Particle(t, (128, 0, 128), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+            p0 = Particle(t, (64, 0, 64), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+            p1 = Particle(t, (80, 0, 80), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
             link = ParticleLink(p0, p1, LinkType.GRADIENT)
             self.add_link(link)
 
@@ -129,7 +129,7 @@ class EffectParticleLink(ParticleSystemRenderer):
             self.driver.set_np(tmp)
             t += self.direction 
             row += 1
-#            self.sleep()
+            self.sleep()
 
         if self.profile:
             stats = pstats.Stats(self.profiler)
