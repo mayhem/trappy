@@ -7,6 +7,8 @@ from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from config import NUM_LEDS, NUM_STRIPS, PROFILE
 
+# Abandoned. Delete soon!
+
 
 class EffectParticleLink(ParticleSystemRenderer):
 

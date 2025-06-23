@@ -16,7 +16,7 @@ from effects.sweep import EffectSweep
 from effects.spiral import EffectSpiral
 from effects.rainbow import EffectRainbowSweep
 from effects.pov import EffectPOV
-from effects.particle_links import EffectParticleLink
+from effects.background import EffectBackground
 
 class EventQueue:
     """ Similar to the Lock object, but previous duplicate events are dropped. """
