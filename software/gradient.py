@@ -59,7 +59,7 @@ class Gradient(object):
 
         raise ValueError("Invalid point for gradient")
 
-def create_gradient(palette):
+def create_gradient(palette, num_leds=NUM_LEDS):
 
     if len(palette) < 2:
         self.print_palette(palette)
@@ -73,14 +73,14 @@ def create_gradient(palette):
         self.print_palette(palette)
         raise ValueError("Last point in palette must be greater than or equal to 1.0")
 
-    step = 1 / (NUM_LEDS-1)
+    step = 1 / (num_leds-1)
     offset = 0.0 # from 0.0 to 1.0 on the gradient
     index = 0    # into the palette
     led = 0
-    gradient = np.zeros((NUM_LEDS, 3), dtype=np.uint8)
+    gradient = np.zeros((num_leds, 3), dtype=np.uint8)
     section_begin_offset = None
     section_end_offset = None
-    while led < NUM_LEDS:
+    while led < num_leds:
         if section_begin_offset is None or offset >= palette[index][0]:
             index += 1
             try:

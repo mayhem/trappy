@@ -59,6 +59,8 @@ class EffectChasingDots(ParticleSystemRenderer):
 
 
     def run(self):
+
+        # TODO: Add fader for "variance on velocity" with min = 0. Constant velocity makes a really nice pattern!
         t = 0
         row = 0
         skip_count = 0

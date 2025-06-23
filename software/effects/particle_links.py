@@ -50,15 +50,18 @@ class EffectParticleLink(ParticleSystemRenderer):
     def run(self):
 
         t = 0
-        if self.variant == 0:
-            p0 = Particle(t, (64, 0, 64), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-            p1 = Particle(t, (80, 0, 80), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-            link = ParticleLink(p0, p1, LinkType.GRADIENT)
-            self.add_link(link)
+
+        # Use link and stationary particle to make a backgound that is constant
+#        if self.variant == 0:
+#            p0 = Particle(t, (64, 0, 64), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+#            p1 = Particle(t, (80, 0, 80), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+#            link = ParticleLink(p0, p1, LinkType.GRADIENT)
+#            self.add_link(link)
 
         row = 0
         skip_count = 0
         spin_offset = 0
+        last_particle = None
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
@@ -95,13 +98,17 @@ class EffectParticleLink(ParticleSystemRenderer):
                             self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, s, velocity, 0.0, sprite))
             elif self.variant == 2:
                 strips = [ x for x in range(self.driver.strips)]
-                shuffle(strips)
-                for s in strips[:count]:
-                    velocity = 1 + randint(2, 6)
-                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, velocity, 0.0, sprite))
-                    velocity = 1 + randint(2, 6)
-                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, -velocity, 0.0, sprite))
-                self.detect_collisions(t)
+                if skip_count == 0:
+                    skip_count = (self.MAX_PARTICLE_COUNT * 2) - count + 1
+                    velocity = 1
+                    part = Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite)
+                    self.add_particle(part)
+
+                    if last_particle is not None:
+                        link = ParticleLink(part, last_particle, LinkType.GRADIENT)
+                        self.add_link(link)
+                    last_particle = part
+                skip_count -= 1
 
             elif self.variant == 3:
                 if skip_count == 0:

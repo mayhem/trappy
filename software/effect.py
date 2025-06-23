@@ -4,7 +4,7 @@ from threading import Thread, Lock
 from queue import Queue
 
 from event import *
-from config import PROFILE
+from config import PROFILE, DISABLE_SLEEP
 
 
 class Effect(Thread):
@@ -129,14 +129,14 @@ class Effect(Thread):
 
     def sleep(self, partial=None):
         """ Partial is used to break a sleep cycle into a partial number of cycles """
-        if PROFILE:
+        if DISABLE_SLEEP:
             return
 
         while True:
             speed = self.speed
             if speed == 0:
-                if not PROFILE:
-                    sleep(.01)
+                # not disabling this sleep, since it only happens when nothing is moving. which is not interesting to profile
+                sleep(.01)
                 continue
 
             break
