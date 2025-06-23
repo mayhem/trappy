@@ -34,8 +34,11 @@ class EffectBackground(ParticleSystemRenderer):
     def run(self):
         t = 0
         p0 = Particle(t, (255, 0, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        p1 = Particle(t, (0, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
-        self.set_background([p0, p1])
+        p1 = Particle(t, (0, 255, 0), .5, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        p2 = Particle(t, (255, 0, 255), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0, -1) 
+        self.add_bg_particle(p0)
+        self.add_bg_particle(p1)
+        self.add_bg_particle(p2)
 
         row = 0
         skip_count = 0

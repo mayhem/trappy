@@ -47,6 +47,8 @@ class ParticleSystemRenderer(Effect):
         super().__init__(driver, event, apc, timeout)
         self.particles = []
         self.bg_particles = []
+
+        self.debug = 5
         
     def add_particle(self, particle):
         insort_left(self.particles, particle, key=lambda x: x.z_order)
@@ -59,30 +61,34 @@ class ParticleSystemRenderer(Effect):
             print("%.2f: " % pal[0], pal[1])
         print()
         
-    def render_background(self, led_data):
+    def render_background(self, t, led_data):
         # Iterate over bg particles
         #   Calculate int pos for all, insertion sort
         # Iterate over pg particles pos
         #   add one point to the palette for each pos.
         #   invalidate out of bounds pos, but keep at least one out of bounds pos 
         particle_positions = []
-        for particle in bg_particles:
-            pos = (p.velocity * (t - p.t) + p.position) / NUM_LEDS
-            insort_right(particle_positions, (particle, pos), key=lambda x: x[1])
+        for p in self.bg_particles:
+            pos = (p.velocity * (t - p.t) + p.position)
+            insort_right(particle_positions, (p, pos), key=lambda x: x[1])
 
+        print(t)
         palette = []            
-        for particle, pos in particle_positions:
-            palette.append((pos, particle.color))
-            print(pos, particle.color)
+        for p, pos in particle_positions:
+            palette.append((pos, p.color))
+            print(pos, p.color)
+        print()
 
-        import sys
-        sys.exit(-1)
+        self.debug -= 1
+        if self.debug == 0:
+            import sys
+            sys.exit(-1)
 
 
-    def render_leds(self, t):
+    def render_leds(self, t, background_color=(0,0,0)):
 
         led_data = [ list(background_color) for x in range(self.driver.strips * self.driver.leds) ]
-        self.render_background(led_data)
+        self.render_background(t, led_data)
 
         still_alive = []
         for p in sorted(self.particles, key=lambda x: x.z_order, reverse=True):
