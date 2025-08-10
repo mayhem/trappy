@@ -67,7 +67,7 @@ class Trappy:
         self.effect_classes.append(EffectSweep)
         self.effect_classes.append(EffectRainbowSweep)
         self.effect_classes.append(EffectPOV)
-        self.effect_classes.append(EffectParticleLink)
+        self.effect_classes.append(EffectBackground)
 
         self.current_effect = None
 

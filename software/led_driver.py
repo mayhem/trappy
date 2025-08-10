@@ -1,5 +1,7 @@
 from time import sleep, monotonic
 
+import numpy as np
+
 import smileds
 from gamma_led_strips import GAMMA
 from gamma_correct import GammaCorrector
@@ -72,6 +74,9 @@ class LEDDriver:
 
     def set(self, buf, no_gamma=False):
 
+        if isinstance(buf, np.ndarray):
+            raise ValueError("numpy argument to a list()  routine")
+
         self.time_frames()
         ba = bytearray([0,0,0] * self.strips * self.leds)
         led = 0
@@ -101,6 +106,9 @@ class LEDDriver:
         self.last_t0 = monotonic()
 
     def set_np(self, buf, no_gamma=False):
+
+        if isinstance(buf, list) or isinstance(buf, tuple):
+            raise ValueError("List/tuple passed to numpy routine")
 
         self.time_frames()
         ba = bytearray(buf.tobytes())

@@ -5,7 +5,7 @@ from color import hue_to_rgb
 import itertools
 from time import sleep, monotonic
 from math import fmod
-from bisect import insort_left
+from bisect import insort_right
 import numpy as np
 
 from gradient import create_gradient
@@ -45,10 +45,14 @@ class ParticleSystemRenderer(Effect):
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
         self.particles = []
-        self.links = []
+        self.bg_particles = []
+        self.debug = 5
         
     def add_particle(self, particle):
-        insort_left(self.particles, particle, key=lambda x: x.z_order)
+        self.particles.append(particle)
+
+    def add_bg_particle(self, particle):
+        self.bg_particles.append(particle)
 
     def print_palette(self, palette):
         for pal in palette:
@@ -61,28 +65,29 @@ class ParticleSystemRenderer(Effect):
         # Iterate over pg particles pos
         #   add one point to the palette for each pos.
         #   invalidate out of bounds pos, but keep at least one out of bounds pos 
-        particle_positions = []
+
+        particle_positions = [[] for _ in range(NUM_STRIPS)]
         for p in self.bg_particles:
             pos = (p.velocity * (t - p.t) + p.position)
-            insort_right(particle_positions, (p, pos), key=lambda x: x[1])
+            if p.r_position is None:
+                for i in range(NUM_STRIPS):
+                    insort_right(particle_positions[i], (p, pos), key=lambda x: x[1])
+            else:
+                insort_right(particle_positions[int(p.r_position)], (p, pos), key=lambda x: x[1])
 
-        print(t)
-        palette = []            
-        for p, pos in particle_positions:
-            palette.append((pos, p.color))
-            print(pos, p.color)
-        print()
+        for i in range(NUM_STRIPS):
+            palette = []
+            for pp in particle_positions[i]:
+                palette.append((pp[1], pp[0].color))
 
-        self.debug -= 1
-        if self.debug == 0:
-            import sys
-            sys.exit(-1)
+            if len(palette) > 1:
+                led_data[i] = create_gradient(palette)
+
 
 
     def render_leds(self, t):
         led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
         self.render_background(t, led_data)
-
         for particle_index, p in enumerate(self.particles):
             is_alive = True
             if p.r_position is None:
