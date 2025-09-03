@@ -14,23 +14,40 @@ from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 from config import NUM_LEDS, NUM_STRIPS
 
+STRIP_ALL = -1
+
 class Particle:
 
-    STRIP_ALL = -1
-    def __init__(self, t: float, color: tuple, position: float, strip: int, velocity:float=1.0, r_velocity:float=1.0, sprite_pattern:int=1):
-        self.t = t                    # Time when particle was added
-        self.color = color            # The color of the particle
-        self.position = position      # Initial position -- we're not tracking current position
-        if strip == Particle.STRIP_ALL:
-            self.r_position = None
+    def __init__(self,
+                 t: float,
+                 color: tuple,
+                 init_pos: float=0.0,
+                 strip: int=STRIP_ALL,
+                 vel:float=1.0,
+                 r_vel:float=1.0,
+                 sprite:int=1):
+        self.init_t = t
+        self.color = color                  # The color of the particle
+        self.init_position = init_pos       # Initial position
+        self.position = init_pos            # Current position
+        if strip == STRIP_ALL:
+            self.r_position = self.init_r_position = None
         else:
-            self.r_position = strip / NUM_STRIPS
-        self.velocity = velocity
-        self.r_velocity = r_velocity
-        self.sprite_pattern = sprite_pattern
+            self.r_position = self.init_r_position = strip / NUM_STRIPS
+        self.velocity = vel
+        self.r_velocity = r_vel
+        self.sprite_pattern = sprite
 
         # If this is set, this particle will be removed after the next render pass
         self.remove_after_next = False
+
+    def drop_out_of_bounds(self):
+        """This funciton is called on a point that just became out of bounds.
+           If any cleanup, like gradient adjustment, is needed before the point
+           is dropped, it can be done here.
+           Return False to keep the point, True to drop it """
+
+        return True
 
     def __str__(self):
         return "t %.3f p: %.3f v: %.3f" % (self.t, self.position, self.velocity)
@@ -59,35 +76,38 @@ class ParticleSystemRenderer(Effect):
             print("%.2f: " % pal[0], pal[1])
         print()
 
-    def render_background(self, t, led_data):
-        # Iterate over bg particles
-        #   Calculate int pos for all, insertion sort
-        # Iterate over pg particles pos
-        #   add one point to the palette for each pos.
-        #   invalidate out of bounds pos, but keep at least one out of bounds pos 
+    def move(self, t):
+        for p in itertools.chain(self.bg_particles, self.particles):
+            p.position = (p.velocity * (t - p.init_t)) + p.init_position
+            if p.init_r_position is None:
+                p.r_position = None
+            else:
+                p.r_position = (p.r_velocity * (t - p.init_t)) + p.init_r_position
+
+    def render_background(self, led_data):
+        # TODO:
+        # Add support for gradient types, so we that we can do pre-set gradient. 
 
         particle_positions = [[] for _ in range(NUM_STRIPS)]
         for p in self.bg_particles:
-            pos = (p.velocity * (t - p.t) + p.position)
-            if p.r_position is None:
+            if p.init_r_position is None:
                 for i in range(NUM_STRIPS):
-                    insort_right(particle_positions[i], (p, pos), key=lambda x: x[1])
+                    insort_right(particle_positions[i], p, key=lambda x: x.position)
             else:
-                insort_right(particle_positions[int(p.r_position)], (p, pos), key=lambda x: x[1])
+                insort_right(particle_positions[int(p.r_position)], p, key=lambda x: x.position)
 
         for i in range(NUM_STRIPS):
             palette = []
             for pp in particle_positions[i]:
-                palette.append((pp[1], pp[0].color))
+                palette.append((pp.position, pp.color))
 
             if len(palette) > 1:
                 led_data[i] = create_gradient(palette)
 
+    def render_leds(self):
 
-
-    def render_leds(self, t):
         led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
-        self.render_background(t, led_data)
+        self.render_background(led_data)
         for particle_index, p in enumerate(self.particles):
             is_alive = True
             if p.r_position is None:
@@ -95,27 +115,25 @@ class ParticleSystemRenderer(Effect):
             else:
                 strips = [int(p.r_position * NUM_STRIPS)]
 
-            # TODO: This function repeats unecessary steps! (calculating pos ($$) does not depend on s
             for s, strip in enumerate(strips):
-                pos = int(p.velocity * (t - p.t) + p.position)
-                if pos >= self.driver.leds or pos < 0:
+                if p.position >= self.driver.leds or p.position < 0:
                     is_alive = False
                 else:
                     if p.r_position is None:
                         r_pos = s / NUM_STRIPS
                     else:
-                        r_pos = fmod(p.r_velocity * (t - p.t) + p.r_position, 1.0)
+                        r_pos = fmod(p.r_position, 1.0)
                     target_strip = int(r_pos * NUM_STRIPS)
-                    if is_alive:
-                        color = self.get_next_color() if p.color is None else p.color
-                        if p.sprite_pattern == 1:
-                            led_data[target_strip][pos] = color
-                        else:
-                            for i in range(8):
-                                if p.sprite_pattern & (1 << i) != 0 and pos + i < self.driver.leds:
-                                    led_data[target_strip][pos + i] = color
+                    color = self.get_next_color() if p.color is None else p.color
+                    if p.sprite_pattern == 1:
+                        led_data[target_strip][p.position] = color
+                    else:
+                        for i in range(8):
+                            if p.sprite_pattern & (1 << i) != 0 and p.position + i < self.driver.leds:
+                                led_data[target_strip][int(p.position + i)] = color
 
             if not is_alive or p.remove_after_next:
-                self.particles.pop(particle_index)
+                if p.drop_out_of_bounds():
+                    self.particles.pop(particle_index)
 
         return led_data

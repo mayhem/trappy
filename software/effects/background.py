@@ -32,13 +32,10 @@ class EffectBackground(ParticleSystemRenderer):
         return None
     
     def run(self):
-        t = 0
-        p0 = Particle(t, (255, 80, 0), 0.0, Particle.STRIP_ALL, 0.0, 0.0, 0) 
-        p1 = Particle(t, (60, 0, 0), 1.0, Particle.STRIP_ALL, 0.0, 0.0, 0) 
-        self.add_bg_particle(p0)
-        self.add_bg_particle(p1)
+        p0 = Particle(0, (255, 80, 0), 0.0)
+        p1 = Particle(0, (60, 0, 0), 1.0)
 
-        row = 0
+        t = 0
         skip_count = 0
         spin_offset = 0
         while not self.stop:
@@ -54,13 +51,13 @@ class EffectBackground(ParticleSystemRenderer):
                     skip_count = self.MAX_PARTICLE_COUNT - count + 1
                     velocity = 1 + randint(2, 6)
                     if self.direction == 1:
-                        self.particles.append(Particle(t, self.get_next_color(), 0, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.particles.append(Particle(t, self.get_next_color(), 0, vel=velocity, sprite=sprite))
                     else:
-                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, Particle.STRIP_ALL, velocity, 0.0, sprite))
+                        self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, vel=velocity, sprite=sprite))
                 skip_count -= 1
 
-            self.driver.set_np(self.render_leds(t))
+            self.driver.set_np(self.render_leds())
             t += self.direction 
-            row += 1
+            self.move(t)
 
             self.sleep()

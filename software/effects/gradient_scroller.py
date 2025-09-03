@@ -8,6 +8,32 @@ from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
 
 
+class PalettePointGenerator:
+
+    def __init__(self, colors, start_pos = 0.0, spacing=None, spacing_func=None):
+        self.colors = colors
+        self.color_index = 1
+        self.pos = start_pos
+        self.spacing = spacing
+        self.spacing_func = spacing_func
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pos = self.pos
+        index = self.color_index
+        self.color_index += 1
+        if self.spacing_func():
+            self.pos += spacing_func()
+        else:
+            self.pos += spacing
+        return ((post, colors[index]))
+
+
 class EffectGradientScroller(Effect):
 
     SLUG = "gradient-scroller"
@@ -41,10 +67,22 @@ class EffectGradientScroller(Effect):
 
         return pal
 
+
     def print_palette(self, palette=None):
         for pal in palette:
             print("%.2f: " % pal[0], pal[1])
         print()
+
+    def particle_run(self):
+        spacing = self.fader_value(self.FADER_SPACING)
+        gen = PalettePointGenerator(self.colors, spacing=spacing)
+
+        self.set_sleep_params(0.0, .2)
+        while not self.stop:
+            if self.timeout is not None and monotonic() > self.timeout:
+                return
+
+
 
     def run(self):
 
