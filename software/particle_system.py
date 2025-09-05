@@ -8,7 +8,7 @@ from math import fmod
 from bisect import insort_right
 import numpy as np
 
-from gradient import create_gradient
+from gradient import create_gradient, print_palette
 from random import random, randint, shuffle
 from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from color import hue_to_rgb, random_color
@@ -147,6 +147,25 @@ class ParticleSystemRenderer(Effect):
                     self.particles.pop(particle_index)
 
         return led_data
+
+    def render_gradient(self):
+        
+        palette = []
+        for p in self.particles:
+            palette.insert(0, (p.position / NUM_LEDS, p.color))
+            
+        if palette[0][0] > 0.0:
+            palette.insert(0, (0.0, (0,0,0)))
+
+        if palette[-1][0] < 1.0:
+            palette.append((1.0, (0,0,0)))
+
+        if len(palette) < 2:
+            return np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
+        
+        return np.tile(create_gradient(palette, num_leds=NUM_LEDS), (1, NUM_STRIPS, 1))
+
+        
 
 class ParticleGenerator:
 

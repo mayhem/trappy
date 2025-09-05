@@ -67,7 +67,6 @@ class EffectGradientScroller(Effect):
 
         return pal
 
-
     def print_palette(self, palette=None):
         for pal in palette:
             print("%.2f: " % pal[0], pal[1])
