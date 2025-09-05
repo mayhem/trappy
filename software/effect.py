@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from random import randrange
 from time import sleep
 from threading import Thread, Lock
 from queue import Queue
@@ -112,6 +113,12 @@ class Effect(Thread):
             self.color_index = (self.color_index + 1) % len(self.colors)
 
         return list(new_color)
+
+    def get_random_color(self):
+        if self.instant_color_queue.qsize() > 0:
+            return self.instant_color_queue.get()
+
+        return self.colors[randrange(len(self.colors))]
 
     def get_num_variants(self):
         return self.VARIANTS

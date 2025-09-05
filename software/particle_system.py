@@ -62,15 +62,6 @@ class LinkType(Enum):
 # Override move to get more funky movements.
 # Make v and f into functions
 
-class ParticleGenerator:
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def next(self, t: float, last_particle: Particle) -> Particle:
-        pass
-    
 class ParticleSystemRenderer(Effect):
 
     def __init__(self, driver, event, apc = None, timeout=None):
@@ -78,6 +69,11 @@ class ParticleSystemRenderer(Effect):
         self.particles = []
         self.bg_particles = []
         self.debug = 5
+        self.num_margin_particles = 0
+
+    def set_num_margin_particles(self, num):
+        # TODO: not implemented yet
+        self.num_margin_particles = num
         
     def add_particle(self, particle):
         self.particles.append(particle)
@@ -151,3 +147,25 @@ class ParticleSystemRenderer(Effect):
                     self.particles.pop(particle_index)
 
         return led_data
+
+class ParticleGenerator:
+
+    def __init__(self, particle_system: ParticleSystemRenderer):
+        self.particle_system = particle_system
+        
+    @property
+    def direction(self):
+        return self.particle_system.direction
+        
+    def get_next_color(self, ignore_odd_colors: bool=False):
+        return self.particle_system.get_next_color(ignore_odd_colors)
+
+    def get_random_color(self):
+        return self.particle_system.get_random_color()
+
+    def add_particle(self, particle):
+        return self.particle_system.add_particle(particle)
+
+    @abstractmethod
+    def next(self, t: float, last_particle: Particle) -> Particle:
+        pass

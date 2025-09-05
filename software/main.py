@@ -60,12 +60,12 @@ class Trappy:
 
         # setup effects
         self.effect_classes = []
-        self.effect_classes.append(EffectGradientScroller)
+#        self.effect_classes.append(EffectGradientScroller)
         self.effect_classes.append(EffectChasingDots)
-        self.effect_classes.append(EffectSparkles)
-        self.effect_classes.append(EffectSweep)
-        self.effect_classes.append(EffectRainbowSweep)
-        self.effect_classes.append(EffectPOV)
+#        self.effect_classes.append(EffectSparkles)
+#        self.effect_classes.append(EffectSweep)
+#        self.effect_classes.append(EffectRainbowSweep)
+#        self.effect_classes.append(EffectPOV)
 
         self.current_effect = None
 
