@@ -23,8 +23,8 @@ class Particle:
                  color: tuple,
                  init_pos: float=0.0,
                  strip: int=STRIP_ALL,
-                 vel:float=1.0,
-                 r_vel:float=1.0,
+                 vel:float=0.0,
+                 r_vel:float=0.0,
                  sprite:int=1):
         self.init_t = t
         self.color = color                  # The color of the particle
@@ -50,12 +50,26 @@ class Particle:
         return True
 
     def __str__(self):
-        return "t %.3f p: %.3f v: %.3f" % (self.t, self.position, self.velocity)
+        return "t %.3f p: %.3f v: %.3f" % (self.init_t, self.position, self.velocity)
         
 class LinkType(Enum):
     GRADIENT = 1
     RAINBOW = 2
     BLACK_WHITE = 3
+
+#TODO: Make pattern where particles wiggle back and forth, and only if they accidentally slide off, generate a new one
+
+# Override move to get more funky movements.
+# Make v and f into functions
+
+class ParticleGenerator:
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def next(self, t: float, last_particle: Particle) -> Particle:
+        pass
     
 class ParticleSystemRenderer(Effect):
 

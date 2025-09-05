@@ -1,3 +1,4 @@
+import itertools
 from time import sleep, monotonic
 
 from particle_system import Particle, ParticleSystemRenderer
@@ -7,12 +8,12 @@ from effect import Effect, SpeedEvent, FaderEvent, DirectionEvent
 from config import NUM_LEDS, NUM_STRIPS
 
 
-class EffectBackground(ParticleSystemRenderer):
+class ChasingDotsEffect(ParticleSystemRenderer):
 
     FADER_COUNT = 2
     FADER_SPRITE = 3
     SLUG = "background"
-    VARIANTS = 1
+    VARIANTS = 4
     MAX_PARTICLE_COUNT = 8
 
     def __init__(self, driver, event, apc = None, timeout=None):
@@ -30,10 +31,34 @@ class EffectBackground(ParticleSystemRenderer):
             return value * 254 + 1
 
         return None
+
+    def detect_collisions(self, t, color = (255, 255, 255)):
+
+        # Organize particles by strips 
+        strips = [ [] for i in range(self.driver.strips) ]
+        for p in self.particles:
+            if p.r_position is None:
+                for s in range(NUM_STRIPS):
+                    strips[s].append(p)
+            else:
+                strip = int(p.r_position * NUM_STRIPS)
+                strips[strip].append(p)
+
+        for strip in strips:
+            for a, b in itertools.combinations(strip, 2):
+                if (a.velocity > 0 and b.velocity < 0 and a.position >= b.position) or \
+                   (a.velocity < 0 and b.velocity > 0 and a.position <= b.position):
+                    is_alive = False
+                    a.color = b.color = color
+                    a.remove_after_next = True 
+                    b.remove_after_next = True
+
     
     def run(self):
         p0 = Particle(0, (255, 80, 0), 0.0)
         p1 = Particle(0, (60, 0, 0), 1.0)
+        self.add_bg_particle(p0)
+        self.add_bg_particle(p1)
 
         t = 0
         skip_count = 0
@@ -54,6 +79,43 @@ class EffectBackground(ParticleSystemRenderer):
                         self.particles.append(Particle(t, self.get_next_color(), 0, vel=velocity, sprite=sprite))
                     else:
                         self.particles.append(Particle(t, self.get_next_color(), self.driver.leds - 1, vel=velocity, sprite=sprite))
+                skip_count -= 1
+
+            elif self.variant == 1:
+                if count == self.driver.strips:
+                    velocity = 1 + randint(2, 6)
+                    if self.direction == 1:
+                        self.add_particle(Particle(t, None, 0, vel=velocity, sprite=sprite))
+                    else:
+                        self.add_particle(Particle(t, None, self.driver.leds - 1, vel=velocity, sprite=sprite))
+                else:
+                    strips = [ x for x in range(self.driver.strips)]
+                    shuffle(strips)
+                    for s in strips[:count]:
+                        velocity = 1 + randint(2, 6)
+                        if self.direction == 1:
+                            self.add_particle(Particle(t, self.get_next_color(), 0, s, vel=velocity, sprite=sprite))
+                        else:
+                            self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, s, vel=velocity, sprite=sprite))
+            elif self.variant == 2:
+                strips = [ x for x in range(self.driver.strips)]
+                shuffle(strips)
+                for s in strips[:count]:
+                    velocity = 1 + randint(2, 6)
+                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), 0, s, vel=velocity, sprite=sprite))
+                    velocity = 1 + randint(2, 6)
+                    self.add_particle(Particle(t, self.get_next_color(ignore_odd_colors=True), self.driver.leds - 1, s, vel=-velocity, sprite=sprite))
+                self.detect_collisions(t)
+
+            elif self.variant == 3:
+                if skip_count == 0:
+                    skip_count = self.MAX_PARTICLE_COUNT - count + 1
+                    velocity = 1 + randint(1, 3)
+                    if self.direction == 1:
+                        self.add_particle(Particle(t, self.get_next_color(), 0, spin_offset, velocity, 0.0625, sprite))
+                    else:
+                        self.add_particle(Particle(t, self.get_next_color(), self.driver.leds - 1, 0, 0.0, random() * 2, sprite))
+                    spin_offset = (spin_offset + 2) % NUM_LEDS
                 skip_count -= 1
 
             self.driver.set_np(self.render_leds())
