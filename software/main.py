@@ -17,6 +17,8 @@ from effects.spiral import EffectSpiral
 from effects.rainbow import EffectRainbowSweep
 from effects.pov import EffectPOV
 from effects.sliding_gradient import EffectSlidingGradient
+from effects.plasma import EffectPlasma
+from effects.random_wigglers import EffectRandomWigglers
 
 class EventQueue:
     """ Similar to the Lock object, but previous duplicate events are dropped. """
@@ -63,6 +65,7 @@ class Trappy:
         self.effect_classes = []
         self.effect_classes.append(EffectChasingDots)
         self.effect_classes.append(EffectSlidingGradient)
+        self.effect_classes.append(EffectRandomWigglers)
 #        self.effect_classes.append(EffectSparkles)
 #        self.effect_classes.append(EffectSweep)
 #        self.effect_classes.append(EffectRainbowSweep)

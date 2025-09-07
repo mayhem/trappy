@@ -66,12 +66,12 @@ def create_gradient(palette, num_leds=NUM_LEDS, led_data=None):
         raise ValueError("Palette must have at least two points.")
 
     if palette[0][0] > 0.0:
-        print_palette(palette)
-        raise ValueError("First point in palette must be less than or equal to 0.0")
+        print("Fixed first point violation")
+        palette.insert(0, (0.0, (255, 255, 255)))
 
     if palette[-1][0] < 1.0:
-        print_palette(palette)
-        raise ValueError("Last point in palette must be greater than or equal to 1.0")
+        print("Fixed last point violation")
+        palette.append((1.0, (255, 255, 255)))
 
     step = 1 / (num_leds-1)
     offset = 0.0 # from 0.0 to 1.0 on the gradient
