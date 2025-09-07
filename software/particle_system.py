@@ -98,6 +98,7 @@ class ParticleSystemRenderer(Effect):
         # TODO:
         # Add support for gradient types, so we that we can do pre-set gradient. 
         # Add render types: gradient, alpha, solid, rainbow, de/colorize
+        # Using an alpha channel allows for much cooler transitions to gradients effects
 
         particle_positions = [[] for _ in range(NUM_STRIPS)]
         for p in self.bg_particles:

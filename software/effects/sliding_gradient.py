@@ -1,4 +1,5 @@
 import itertools
+from math import sin
 from time import sleep, monotonic
 
 from particle_system import Particle, ParticleSystemRenderer, ParticleGenerator
@@ -29,6 +30,7 @@ class EffectSlidingGradient(ParticleSystemRenderer):
 
     SLUG = "sliding-gradient"
     FADER_SPACING = 2
+    FADER_WOBBLE = 3
     SPACING_RANGE_MIN = 2
     SPACING_RANGE_MAX = 8
     VARIANTS = 1
@@ -46,13 +48,16 @@ class EffectSlidingGradient(ParticleSystemRenderer):
         if fader == self.FADER_SPACING:
             return value * self.SPACING_RANGE_MAX + self.SPACING_RANGE_MIN
 
+        if fader == self.FADER_WOBBLE:
+            return value
+
         return None
 
     def run(self):
 
         t = 0
         spacing = int(self.fader_value(self.FADER_SPACING))
-        while(len(self.bg_particles) < 2 or self.bg_particles[0].position <= NUM_LEDS + spacing):
+        while(len(self.bg_particles) < 2 or self.bg_particles[0].position <= NUM_LEDS + (spacing * 3)):
             self.generators[self.variant].next(t, spacing)
             self.move(t)
             t += 1
@@ -62,7 +67,12 @@ class EffectSlidingGradient(ParticleSystemRenderer):
                 return
 
             spacing = int(self.fader_value(self.FADER_SPACING))
-            self.generators[self.variant].next(t, spacing)
+            wobble = self.fader_value(self.FADER_WOBBLE) / 8.0
+
+            # This wobble concept is seriously brittle. Need weights 
+            #shift = sin(t) * wobble
+            #print("wobble: %.3f shift: %.3f" % (wobble, shift))
+            self.generators[self.variant].next(t, spacing) # + shift)
             self.driver.set_np(self.render_leds())
             t += self.direction 
             self.move(t)
