@@ -69,11 +69,11 @@ class ParticleSystemRenderer(Effect):
         self.particles = []
         self.bg_particles = []
         self.debug = 5
-        self.num_margin_particles = 0
+        self.allow_margin_particles = False
 
-    def set_num_margin_particles(self, num):
+    def set_allow_margin_particles(self, state):
         # TODO: not implemented yet
-        self.num_margin_particles = num
+        self.allow_margin_particles = state
         
     def add_particle(self, particle):
         self.particles.append(particle)
@@ -97,6 +97,7 @@ class ParticleSystemRenderer(Effect):
     def render_background(self, led_data):
         # TODO:
         # Add support for gradient types, so we that we can do pre-set gradient. 
+        # Add render types: gradient, alpha, solid, rainbow, de/colorize
 
         particle_positions = [[] for _ in range(NUM_STRIPS)]
         for p in self.bg_particles:
@@ -109,7 +110,7 @@ class ParticleSystemRenderer(Effect):
         for i in range(NUM_STRIPS):
             palette = []
             for pp in particle_positions[i]:
-                palette.append((pp.position, pp.color))
+                palette.append((pp.position / NUM_LEDS, pp.color))
 
             if len(palette) > 1:
                 led_data[i] = create_gradient(palette)
@@ -125,22 +126,22 @@ class ParticleSystemRenderer(Effect):
             else:
                 strips = [int(p.r_position * NUM_STRIPS)]
 
-            for s, strip in enumerate(strips):
-                if p.position >= self.driver.leds or p.position < 0:
-                    is_alive = False
-                else:
-                    if p.r_position is None:
-                        r_pos = s / NUM_STRIPS
-                    else:
-                        r_pos = fmod(p.r_position, 1.0)
-                    target_strip = int(r_pos * NUM_STRIPS)
-                    color = self.get_next_color() if p.color is None else p.color
-                    if p.sprite_pattern == 1:
-                        led_data[target_strip][p.position] = color
-                    else:
-                        for i in range(8):
-                            if p.sprite_pattern & (1 << i) != 0 and p.position + i < self.driver.leds:
-                                led_data[target_strip][int(p.position + i)] = color
+            if p.position >= self.driver.leds or p.position < 0:
+                is_alive = False
+            else:
+                for s, strip in enumerate(strips):
+                        if p.r_position is None:
+                            r_pos = s / NUM_STRIPS
+                        else:
+                            r_pos = fmod(p.r_position, 1.0)
+                        target_strip = int(r_pos * NUM_STRIPS)
+                        color = self.get_next_color() if p.color is None else p.color
+                        if p.sprite_pattern == 1:
+                            led_data[target_strip][p.position] = color
+                        else:
+                            for i in range(8):
+                                if p.sprite_pattern & (1 << i) != 0 and p.position + i < self.driver.leds:
+                                    led_data[target_strip][int(p.position + i)] = color
 
             if not is_alive or p.remove_after_next:
                 if p.drop_out_of_bounds():
@@ -149,16 +150,17 @@ class ParticleSystemRenderer(Effect):
         return led_data
 
     def render_gradient(self):
+        ''' Assumes that all particles are in order '''
         
         palette = []
         for p in self.particles:
             palette.insert(0, (p.position / NUM_LEDS, p.color))
             
-        if palette[0][0] > 0.0:
-            palette.insert(0, (0.0, (0,0,0)))
+#        if palette[0][0] > 0.0:
+#            palette.insert(0, (0.0, (0,0,0)))
 
-        if palette[-1][0] < 1.0:
-            palette.append((1.0, (0,0,0)))
+#        if palette[-1][0] < 1.0:
+#            palette.append((1.0, (0,0,0)))
 
         if len(palette) < 2:
             return np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
@@ -169,8 +171,9 @@ class ParticleSystemRenderer(Effect):
 
 class ParticleGenerator:
 
-    def __init__(self, particle_system: ParticleSystemRenderer):
+    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
         self.particle_system = particle_system
+        self.make_bg_particles = make_bg_particles
         
     @property
     def direction(self):
@@ -183,7 +186,10 @@ class ParticleGenerator:
         return self.particle_system.get_random_color()
 
     def add_particle(self, particle):
-        return self.particle_system.add_particle(particle)
+        if self.make_bg_particles:
+            self.particle_system.add_bg_particle(particle)
+        else:
+            self.particle_system.add_particle(particle)
 
     @abstractmethod
     def next(self, t: float, last_particle: Particle) -> Particle:

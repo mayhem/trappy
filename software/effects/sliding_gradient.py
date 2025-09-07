@@ -9,19 +9,19 @@ from config import NUM_LEDS, NUM_STRIPS
 
 class SlidingGradient(ParticleGenerator):
     
-    def __init__(self, particle_system: ParticleSystemRenderer):
-        ParticleGenerator.__init__(self, particle_system)
+    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
+        ParticleGenerator.__init__(self, particle_system, make_bg_particles)
         self.skip_count = 0
 
-    def next(self, t: float, fader_spacing):
+    def next(self, t: float, fader_spacing, use_bg=False):
         
         if self.skip_count == 0:
             self.skip_count = fader_spacing
             velocity = 2
             if self.direction == 1:
-                self.add_particle(Particle(t, self.get_next_color(), 0, strip=0, vel=velocity))
+                self.add_particle(Particle(t, self.get_next_color(), -(fader_spacing * 2), vel=velocity))
             else:
-                self.add_particle(Particle(t, self.get_next_color(), NUM_LEDS - 1, strip=0, vel=velocity))
+                self.add_particle(Particle(t, self.get_next_color(), NUM_LEDS - 1, vel=velocity))
 
         self.skip_count -= 1
 
@@ -35,7 +35,7 @@ class EffectSlidingGradient(ParticleSystemRenderer):
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.generators = [SlidingGradient(self)]
+        self.generators = [SlidingGradient(self, True)]
         self.hue = 0.0
 
     def get_active_faders(self):
@@ -51,13 +51,19 @@ class EffectSlidingGradient(ParticleSystemRenderer):
     def run(self):
 
         t = 0
+        spacing = int(self.fader_value(self.FADER_SPACING))
+        while(len(self.bg_particles) < 2 or self.bg_particles[0].position <= NUM_LEDS + spacing):
+            self.generators[self.variant].next(t, spacing)
+            self.move(t)
+            t += 1
+
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:
                 return
 
             spacing = int(self.fader_value(self.FADER_SPACING))
             self.generators[self.variant].next(t, spacing)
-            self.driver.set_np(self.render_gradient())
+            self.driver.set_np(self.render_leds())
             t += self.direction 
             self.move(t)
 
