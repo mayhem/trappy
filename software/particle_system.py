@@ -85,20 +85,22 @@ class ParticleSystemRenderer(Effect):
             else:
                 p.r_position = (p.r_velocity * (t - p.init_t)) + p.init_r_position
 
-    def render_background(self, led_data):
+    def render_background(self):
         # TODO:
         # Add support for gradient types, so we that we can do pre-set gradient. 
         # Add render types: gradient, alpha, solid, rainbow, de/colorize
         # Using an alpha channel allows for much cooler transitions to gradients effects
 
         particle_positions = [[] for _ in range(NUM_STRIPS)]
+        all_strip_all = True
         for i in range(len(self.bg_particles) - 1, -1, -1):
             p = self.bg_particles[i]
             if p.init_r_position is None:
-                for i in range(NUM_STRIPS):
-                    insort_right(particle_positions[i], p, key=lambda x: x.position)
+                for j in range(NUM_STRIPS):
+                    insort_right(particle_positions[j], p, key=lambda x: x.position)
             else:
-                insort_right(particle_positions[int(p.r_position)], p, key=lambda x: x.position)
+                all_strip_all = False
+                insort_right(particle_positions[int(p.r_position * NUM_STRIPS)], p, key=lambda x: x.position)
 
             # check for ttl expiry
             if p.ttl is not None:
@@ -106,19 +108,32 @@ class ParticleSystemRenderer(Effect):
                 if p.ttl == 0:
                     del self.bg_particles[i]
 
-        for i in range(NUM_STRIPS):
-            palette = []
-            for pp in particle_positions[i]:
-                palette.append((pp.position / NUM_LEDS, pp.color))
+        if all_strip_all:
+            for i in range(NUM_STRIPS):
+                palette = []
+                for pp in particle_positions[i]:
+                    palette.append((pp.position / NUM_LEDS, pp.color))
 
-            if len(palette) > 1:
-                print_palette(palette)
-                led_data[i] = create_gradient(palette)
+                if len(palette) > 1:
+                    led_data = np.tile(create_gradient(palette), (1, NUM_STRIPS, 1))
+                else:
+                    led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
+        else:
+            led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
+            for strip in range(NUM_STRIPS):
+                palette = []
+                for pp in particle_positions[strip]:
+                    palette.append((pp.position / NUM_LEDS, pp.color))
+
+                if len(palette) > 1:
+                    led_data[strip] = create_gradient(palette)
+                    
+        return led_data
+            
 
     def render_leds(self):
 
-        led_data = np.zeros((self.driver.strips, self.driver.leds, 3), dtype=np.uint8)
-        self.render_background(led_data)
+        led_data = self.render_background()
         for particle_index, p in enumerate(self.particles):
             is_alive = True
             if p.r_position is None:
@@ -160,8 +175,7 @@ class ParticleSystemRenderer(Effect):
                                     led_data[target_strip][int(p.position + i)] = color
 
             if not is_alive or p.remove_after_next:
-                if p.drop_out_of_bounds():
-                    self.particles.pop(particle_index)
+                self.particles.pop(particle_index)
 
         return led_data
 
