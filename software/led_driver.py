@@ -68,7 +68,7 @@ class LEDDriver:
             self.total_time += monotonic() - self.last_t0
             self.frame += 1
             if self.frame == 10:
-                print("%dms" % int(self.total_time / self.frame * 1000))
+                #print("%dms" % int(self.total_time / self.frame * 1000))
                 self.frame = 0
                 self.total_time = 0.0
 

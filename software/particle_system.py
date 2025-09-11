@@ -29,7 +29,7 @@ class Particle:
                  fade:float=None,
                  ttl=None):
         self.init_t = t
-        self.color = color                  # The color of the particle
+        self.color = list(color)            # The color of the particle
         self.init_position = init_pos       # Initial position
         self.position = init_pos            # Current position
         if strip == STRIP_ALL:
@@ -168,7 +168,7 @@ class ParticleSystemRenderer(Effect):
                         target_strip = int(r_pos * NUM_STRIPS)
                         color = self.get_next_color() if p.color is None else p.color
                         if p.sprite_pattern == 1:
-                            led_data[target_strip][p.position] = color
+                            led_data[target_strip][int(p.position)] = color
                         else:
                             for i in range(8):
                                 if p.sprite_pattern & (1 << i) != 0 and p.position + i < self.driver.leds:
