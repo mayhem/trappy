@@ -120,11 +120,6 @@ class EffectChasingDots(ParticleSystemRenderer):
 
     
     def run(self):
-        p0 = Particle(0, (64, 20, 0), 0.0)
-        p1 = Particle(0, (32, 10, 0), 1.0)
-#        self.add_bg_particle(p0)
-#        self.add_bg_particle(p1)
-
         t = 0
         while not self.stop:
             if self.timeout is not None and monotonic() > self.timeout:

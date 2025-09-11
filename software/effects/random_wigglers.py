@@ -11,8 +11,8 @@ from color import hue_to_rgb
 
 class WiggleGenerator(ParticleGenerator):
     
-    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
-        ParticleGenerator.__init__(self, particle_system, make_bg_particles)
+    def __init__(self, particle_system: ParticleSystemRenderer):
+        ParticleGenerator.__init__(self, particle_system)
         self.particles_per_strip = {}  # Track particles per strip
         
     def next(self, t: float, particle_count, spread, sprite):
@@ -68,8 +68,8 @@ class WiggleGenerator(ParticleGenerator):
 
 class SineWaveGenerator(ParticleGenerator):
     
-    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
-        ParticleGenerator.__init__(self, particle_system, make_bg_particles)
+    def __init__(self, particle_system: ParticleSystemRenderer):
+        ParticleGenerator.__init__(self, particle_system)
         self.particles_per_strip = {}  # Track particles per strip
         
     def next(self, t: float, particle_count, spread, sprite, ttl):

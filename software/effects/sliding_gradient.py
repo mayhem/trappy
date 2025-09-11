@@ -10,8 +10,8 @@ from config import NUM_LEDS, NUM_STRIPS
 
 class SlidingGradient(ParticleGenerator):
     
-    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
-        ParticleGenerator.__init__(self, particle_system, make_bg_particles)
+    def __init__(self, particle_system: ParticleSystemRenderer):
+        ParticleGenerator.__init__(self, particle_system)
         self.skip_count = 0
 
     def next(self, t: float, fader_spacing, use_bg=False):
@@ -20,11 +20,11 @@ class SlidingGradient(ParticleGenerator):
             self.skip_count = fader_spacing
             velocity = 2
             if self.direction == 1:
-                self.add_particle(Particle(t, self.get_next_color(), -(fader_spacing * 2), vel=velocity))
+                self.add_bg_particle(Particle(t, self.get_next_color(), -(fader_spacing * 2), vel=velocity))
             else:
-                self.add_particle(Particle(t, self.get_next_color(), NUM_LEDS - 1, vel=velocity))
-
+                self.add_bg_particle(Particle(t, self.get_next_color(), NUM_LEDS - 1, vel=velocity))
         self.skip_count -= 1
+
 
 class EffectSlidingGradient(ParticleSystemRenderer):
 
@@ -37,7 +37,7 @@ class EffectSlidingGradient(ParticleSystemRenderer):
 
     def __init__(self, driver, event, apc = None, timeout=None):
         super().__init__(driver, event, apc, timeout)
-        self.generators = [SlidingGradient(self, True)]
+        self.generators = [SlidingGradient(self)]
         self.hue = 0.0
 
     def get_active_faders(self):

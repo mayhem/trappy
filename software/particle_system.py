@@ -25,7 +25,9 @@ class Particle:
                  strip: int=STRIP_ALL,
                  vel:float=0.0,
                  r_vel:float=0.0,
-                 sprite:int=1):
+                 sprite:int=1,
+                 fade:float=None,
+                 ttl=None):
         self.init_t = t
         self.color = color                  # The color of the particle
         self.init_position = init_pos       # Initial position
@@ -37,17 +39,11 @@ class Particle:
         self.velocity = vel
         self.r_velocity = r_vel
         self.sprite_pattern = sprite
+        self.fade = fade
+        self.ttl = ttl
 
         # If this is set, this particle will be removed after the next render pass
         self.remove_after_next = False
-
-    def drop_out_of_bounds(self):
-        """This funciton is called on a point that just became out of bounds.
-           If any cleanup, like gradient adjustment, is needed before the point
-           is dropped, it can be done here.
-           Return False to keep the point, True to drop it """
-
-        return True
 
     def __str__(self):
         return "t %.3f p: %.3f v: %.3f" % (self.init_t, self.position, self.velocity)
@@ -69,12 +65,7 @@ class ParticleSystemRenderer(Effect):
         self.particles = []
         self.bg_particles = []
         self.debug = 5
-        self.allow_margin_particles = False
 
-    def set_allow_margin_particles(self, state):
-        # TODO: not implemented yet
-        self.allow_margin_particles = state
-        
     def add_particle(self, particle):
         self.particles.append(particle)
 
@@ -101,12 +92,19 @@ class ParticleSystemRenderer(Effect):
         # Using an alpha channel allows for much cooler transitions to gradients effects
 
         particle_positions = [[] for _ in range(NUM_STRIPS)]
-        for p in self.bg_particles:
+        for i in range(len(self.bg_particles) - 1, -1, -1):
+            p = self.bg_particles[i]
             if p.init_r_position is None:
                 for i in range(NUM_STRIPS):
                     insort_right(particle_positions[i], p, key=lambda x: x.position)
             else:
                 insort_right(particle_positions[int(p.r_position)], p, key=lambda x: x.position)
+
+            # check for ttl expiry
+            if p.ttl is not None:
+                p.ttl -= 1
+                if p.ttl == 0:
+                    del self.bg_particles[i]
 
         for i in range(NUM_STRIPS):
             palette = []
@@ -114,6 +112,7 @@ class ParticleSystemRenderer(Effect):
                 palette.append((pp.position / NUM_LEDS, pp.color))
 
             if len(palette) > 1:
+                print_palette(palette)
                 led_data[i] = create_gradient(palette)
 
     def render_leds(self):
@@ -127,9 +126,25 @@ class ParticleSystemRenderer(Effect):
             else:
                 strips = [int(p.r_position * NUM_STRIPS)]
 
+            # Fade the particle and remove is black
+            if p.fade is not None and p.color is not None:
+                p.color[0] = int(p.color[0] * p.fade)
+                p.color[1] = int(p.color[1] * p.fade)
+                p.color[2] = int(p.color[2] * p.fade)
+                if (p.color[0] == 0 and p.color[1] == 0 and p.color[2] == 0):
+                    is_alive = False
+
+            # check for out of bounds
             if p.position >= self.driver.leds or p.position < 0:
                 is_alive = False
-            else:
+
+            # check for ttl expiry
+            if p.ttl is not None:
+                p.ttl -= 1
+                if p.ttl == 0:
+                    is_alive = False
+                
+            if is_alive:
                 for s, strip in enumerate(strips):
                         if p.r_position is None:
                             r_pos = s / NUM_STRIPS
@@ -172,9 +187,8 @@ class ParticleSystemRenderer(Effect):
 
 class ParticleGenerator:
 
-    def __init__(self, particle_system: ParticleSystemRenderer, make_bg_particles=False):
+    def __init__(self, particle_system: ParticleSystemRenderer):
         self.particle_system = particle_system
-        self.make_bg_particles = make_bg_particles
         
     @property
     def direction(self):
@@ -186,12 +200,12 @@ class ParticleGenerator:
     def get_random_color(self):
         return self.particle_system.get_random_color()
 
+    def add_bg_particle(self, particle):
+        self.particle_system.add_bg_particle(particle)
+
     def add_particle(self, particle):
-        if self.make_bg_particles:
-            self.particle_system.add_bg_particle(particle)
-        else:
-            self.particle_system.add_particle(particle)
+        self.particle_system.add_particle(particle)
 
     @abstractmethod
-    def next(self, t: float, last_particle: Particle) -> Particle:
+    def next(self, t: float) -> Particle:
         pass

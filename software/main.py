@@ -15,6 +15,7 @@ from effects.sparkles import EffectSparkles
 from effects.sweep import EffectSweep
 from effects.spiral import EffectSpiral
 from effects.rainbow import EffectRainbowSweep
+from effects.radar import EffectRadar
 from effects.pov import EffectPOV
 from effects.sliding_gradient import EffectSlidingGradient
 from effects.plasma import EffectPlasma
@@ -66,6 +67,7 @@ class Trappy:
         self.effect_classes.append(EffectChasingDots)
         self.effect_classes.append(EffectSlidingGradient)
         self.effect_classes.append(EffectRandomWigglers)
+        self.effect_classes.append(EffectRadar)
 #        self.effect_classes.append(EffectSparkles)
 #        self.effect_classes.append(EffectSweep)
 #        self.effect_classes.append(EffectRainbowSweep)
